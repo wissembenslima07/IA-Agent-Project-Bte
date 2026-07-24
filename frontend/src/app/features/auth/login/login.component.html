@@ -10,11 +10,7 @@
     }
 
     <button type="submit" [disabled]="isLoading()">
-      @if (isLoading()) {
-        Connexion en cours...
-      } @else {
-        Se connecter
-      }
+      @if (isLoading()) { Connexion en cours... } @else { Se connecter }
     </button>
   </form>
 </div>

@@ -4,6 +4,12 @@ import { Router } from '@angular/router';
 import { tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+interface AuthResponse {
+  token: string;
+  role: string;
+  email: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private http = inject(HttpClient);
@@ -15,7 +21,7 @@ export class AuthService {
   currentRole = computed(() => this.role());
 
   login(email: string, password: string) {
-    return this.http.post<{ token: string; role: string }>(`${this.apiUrl}/login`, { email, password })
+    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, { email, password })
       .pipe(tap(res => {
         localStorage.setItem('access_token', res.token);
         localStorage.setItem('role', res.role);
