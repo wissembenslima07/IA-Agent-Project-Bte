@@ -1,0 +1,22 @@
+:host {
+  display: contents; // pour que aside/main gardent leur positionnement fixed/flex direct
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.sidebar-active {
+  background-color: #acc9ed !important;
+  color: #001d35 !important;
+}
+
+.risk-progress {
+  height: 6px;
+  border-radius: 3px;
+}
+
+.table-row-hover:hover {
+  background-color: #f9fafb;
+  transition: background-color 0.2s ease;
+}

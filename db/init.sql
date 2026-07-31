@@ -35,6 +35,21 @@ CREATE TABLE permissions (
     action VARCHAR(100) NOT NULL,
     ressource VARCHAR(100) NOT NULL
 );
+-- Historique des actions sur un dossier (traçabilité)
+CREATE TABLE historique_actions (
+    id BIGSERIAL PRIMARY KEY,
+    dossier_id BIGINT NOT NULL REFERENCES dossiers_credit(id) ON DELETE CASCADE,
+    utilisateur_id BIGINT REFERENCES utilisateurs(id),
+    action VARCHAR(100) NOT NULL,
+    details VARCHAR(500),
+    date_action TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_historique_dossier ON historique_actions(dossier_id);
+CREATE INDEX idx_dossiers_conseiller ON dossiers_credit(conseiller_id);
+
+
+
 
 INSERT INTO permissions (role, action, ressource) VALUES
 ('ADMIN', 'MANAGE', 'UTILISATEURS'),
@@ -43,5 +58,5 @@ INSERT INTO permissions (role, action, ressource) VALUES
 
 -- Utilisateur de test (mot de passe encode en BCrypt pour "password123")
 INSERT INTO utilisateurs (nom, prenom, email, mot_de_passe, role) VALUES
-('Karoui', 'Alaeddine', 'alaeddine.karoui@bte.tn', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5vjeGw3.WBQhO7O9YwUFcE9XvS.wm', 'ADMIN'),
-('Ben Slima', 'Wissem', 'wissem.benslima@bte.tn', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5vjeGw3.WBQhO7O9YwUFcE9XvS.wm', 'CONSEILLER');
+('Karoui', 'Alaeddine', 'alaeddine.karoui@bte.tn', '$2a$10$UsqLw0mSGUoG9e7fcD33b.38kTl2XCvGuYmdRlMoQBk4/.zi5T1Q6', 'ADMIN'),
+('Ben Slima', 'Wissem', 'wissem.benslima@bte.tn', '$2a$10$UsqLw0mSGUoG9e7fcD33b.38kTl2XCvGuYmdRlMoQBk4/.zi5T1Q6', 'CONSEILLER');

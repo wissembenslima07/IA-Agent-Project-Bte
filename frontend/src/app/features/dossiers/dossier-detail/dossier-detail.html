@@ -1,0 +1,238 @@
+<!-- SideNavBar -->
+<aside class="flex flex-col h-screen w-[240px] py-xl px-md gap-lg fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant z-50">
+  <div class="flex items-center gap-sm px-sm mb-lg">
+    <div class="w-10 h-10 bg-primary flex items-center justify-center rounded-lg">
+      <span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+    </div>
+    <div>
+      <h1 class="text-headline-sm font-headline-sm font-black text-primary leading-tight">BTE Advisor</h1>
+      <p class="text-label-sm font-label-sm text-on-surface-variant">Risk Management Unit</p>
+    </div>
+  </div>
+  <nav class="flex flex-col gap-sm flex-1">
+    <a routerLink="/dashboard" class="flex items-center gap-md text-on-surface-variant px-md py-sm hover:bg-surface-container-high transition-all cursor-pointer rounded-lg">
+      <span class="material-symbols-outlined">dashboard</span>
+      <span class="text-label-md font-label-md">Dashboard</span>
+    </a>
+    <a routerLink="/dossiers" class="flex items-center gap-md bg-secondary-container text-on-secondary-container rounded-lg px-md py-sm scale-98 transition-transform duration-150">
+      <span class="material-symbols-outlined">folder_open</span>
+      <span class="text-label-md font-label-md">Dossiers de crédit</span>
+    </a>
+    <a href="#" class="flex items-center gap-md text-on-surface-variant px-md py-sm hover:bg-surface-container-high transition-all cursor-pointer rounded-lg">
+      <span class="material-symbols-outlined">psychology</span>
+      <span class="text-label-md font-label-md">AI Risk Analysis</span>
+    </a>
+    <a href="#" class="flex items-center gap-md text-on-surface-variant px-md py-sm hover:bg-surface-container-high transition-all cursor-pointer rounded-lg">
+      <span class="material-symbols-outlined">history</span>
+      <span class="text-label-md font-label-md">Credit Archives</span>
+    </a>
+    <a href="#" class="flex items-center gap-md text-on-surface-variant px-md py-sm hover:bg-surface-container-high transition-all cursor-pointer rounded-lg">
+      <span class="material-symbols-outlined">group</span>
+      <span class="text-label-md font-label-md">Team Settings</span>
+    </a>
+  </nav>
+</aside>
+
+<!-- Main Workspace -->
+<main class="ml-[240px] flex-1 flex flex-col">
+  <!-- TopNavBar -->
+  <header class="flex justify-between items-center w-full px-gutter h-16 sticky top-0 z-40 bg-surface-container-lowest border-b border-outline-variant">
+    <div class="flex items-center gap-lg">
+      <h2 class="text-title-lg font-title-lg font-bold text-primary">Détail du dossier</h2>
+    </div>
+    <div class="flex items-center gap-sm">
+      <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-white text-label-md">JD</div>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="p-gutter max-w-max-width mx-auto w-full">
+      <p class="text-body-lg text-on-surface-variant">Chargement du dossier...</p>
+    </div>
+  } @else if (errorMessage() && !dossier()) {
+    <div class="p-gutter max-w-max-width mx-auto w-full">
+      <div class="bg-error-container text-error px-lg py-md rounded-xl mb-md">{{ errorMessage() }}</div>
+      <button (click)="retourListe()" class="px-lg py-sm rounded-lg bg-primary text-white font-label-md">
+        Retour à la liste
+      </button>
+    </div>
+  } @else if (dossier(); as d) {
+    <div class="p-gutter max-w-max-width mx-auto w-full space-y-lg">
+      <!-- Breadcrumb -->
+      <nav class="flex items-center gap-xs text-on-surface-variant">
+        <a class="text-label-md hover:text-primary transition-colors cursor-pointer" (click)="retourListe()">Dossiers de crédit</a>
+        <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+        <span class="text-label-md font-bold text-primary">{{ displayName() }}</span>
+      </nav>
+
+      <!-- Erreur (ex: échec du changement de statut) -->
+      @if (errorMessage()) {
+        <div class="bg-error-container text-error px-lg py-md rounded-xl">{{ errorMessage() }}</div>
+      }
+
+      <!-- Header Card -->
+      <section class="bg-white rounded-xl p-lg border border-outline-variant custom-shadow flex flex-col md:flex-row md:items-center justify-between gap-lg">
+        <div class="flex items-center gap-lg">
+          <div class="w-20 h-20 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-display-lg">
+            {{ initials() }}
+          </div>
+          <div class="space-y-xs">
+            <div class="flex items-center gap-md">
+              <h3 class="text-headline-md font-headline-md text-primary">{{ displayName() }}</h3>
+              <span class="px-sm py-xs rounded-lg text-label-md font-bold" [ngClass]="statutBadgeClasses[d.statut]">
+                {{ getStatutLabel(d.statut) }}
+              </span>
+            </div>
+            <div class="flex flex-wrap items-center gap-xl text-on-surface-variant">
+              <div class="flex items-center gap-xs">
+                <span class="text-label-md font-semibold">ID:</span>
+                <span class="text-body-md">#{{ d.id }}</span>
+              </div>
+              <div class="flex items-center gap-xs">
+                <span class="text-label-md font-semibold">Date de création:</span>
+                <span class="text-body-md">{{ d.dateCreation | date: 'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="flex items-center gap-xs">
+                <span class="text-label-md font-semibold">Conseiller:</span>
+                <span class="text-body-md">{{ conseillerDisplay(d) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative">
+          <button
+            (click)="isChangingStatus.set(!isChangingStatus())"
+            [disabled]="isUpdatingStatus()"
+            class="px-lg py-sm border-2 border-secondary text-secondary rounded-lg font-bold hover:bg-secondary-fixed transition-colors active:opacity-80 disabled:opacity-50">
+            @if (isUpdatingStatus()) {
+              Mise à jour...
+            } @else {
+              Changer le statut
+            }
+          </button>
+          @if (isChangingStatus()) {
+            <div class="absolute right-0 mt-2 w-48 bg-white border border-outline-variant rounded-lg shadow-lg z-10 overflow-hidden">
+              @for (statut of ['EN_COURS', 'EN_ANALYSE', 'VALIDE', 'REFUSE']; track statut) {
+                <button
+                  (click)="changerStatut($any(statut))"
+                  class="w-full text-left px-md py-sm text-body-md hover:bg-surface-container-low transition-colors">
+                 {{ getStatutLabel(statut) }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- Grid Layout 65/35 -->
+      <div class="grid grid-cols-1 lg:grid-cols-10 gap-lg">
+        <!-- Left Column -->
+        <div class="lg:col-span-6 space-y-lg">
+          <!-- Documents Card : pas de champ documentsCount côté back, état vide en dur -->
+          <div class="bg-white rounded-xl p-xl border border-outline-variant custom-shadow">
+            <div class="flex items-center justify-between mb-xl">
+              <h4 class="text-title-lg font-title-lg text-primary">Documents du dossier</h4>
+              <span class="text-label-md text-on-surface-variant">0 Documents</span>
+            </div>
+            <div class="flex flex-col items-center justify-center py-xl border-2 border-dashed border-outline-variant rounded-xl bg-surface-container-low">
+              <div class="w-16 h-16 bg-surface-container-highest rounded-full flex items-center justify-center mb-md">
+                <span class="material-symbols-outlined text-outline text-[32px]">folder_off</span>
+              </div>
+              <p class="text-body-lg text-on-surface-variant mb-lg">Aucun document déposé</p>
+              <button
+                (click)="ajouterDocument()"
+                class="px-xl py-md bg-primary text-white rounded-lg font-bold flex items-center gap-sm hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20">
+                <span class="material-symbols-outlined text-[20px]">add</span>
+                Ajouter un document
+              </button>
+              @if (documentUploadMessage()) {
+                <p class="text-label-sm text-on-surface-variant italic mt-md">{{ documentUploadMessage() }}</p>
+              }
+            </div>
+          </div>
+
+          <!-- Risk Score Card : pas de champ scoreRisque, état "à venir" en dur -->
+          <div class="bg-white rounded-xl p-xl border border-outline-variant custom-shadow overflow-hidden relative">
+            <div class="flex items-center justify-between mb-xl">
+              <h4 class="text-title-lg font-title-lg text-primary">Score de risque</h4>
+            </div>
+            <div class="flex flex-col md:flex-row items-center gap-xl">
+              <div class="relative w-32 h-32 flex items-center justify-center">
+                <svg class="w-full h-full transform -rotate-90">
+                  <circle class="text-surface-container-highest" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-width="8"></circle>
+                  <circle class="text-outline-variant" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor"
+                          stroke-dasharray="364.4" stroke-dashoffset="364.4" stroke-linecap="round" stroke-width="8"></circle>
+                </svg>
+                <span class="absolute text-headline-md font-black text-on-surface-variant">—</span>
+              </div>
+              <div class="flex-1 space-y-md text-center md:text-left">
+                <p class="text-display-lg font-black text-primary leading-none">— / 100</p>
+                <p class="text-body-md text-on-surface-variant max-w-xs">
+                  L'analyse IA n'a pas encore été lancée pour ce dossier.
+                </p>
+                <button
+                  (click)="lancerAnalyse()"
+                  class="px-lg py-sm border-2 border-secondary text-secondary rounded-lg font-bold hover:bg-secondary-fixed transition-colors">
+                  Lancer l'analyse
+                </button>
+                @if (analyseIaMessage()) {
+                  <p class="text-label-sm text-on-surface-variant italic">{{ analyseIaMessage() }}</p>
+                }
+              </div>
+            </div>
+            <div class="absolute -right-8 -bottom-8 opacity-5">
+              <span class="material-symbols-outlined text-[120px]">psychology</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Historique -->
+        <div class="lg:col-span-4 space-y-lg">
+          <div class="bg-white rounded-xl p-xl border border-outline-variant custom-shadow flex flex-col h-full">
+            <h4 class="text-title-lg font-title-lg text-primary mb-xl">Historique des actions</h4>
+
+            @if (isLoadingHistorique()) {
+              <p class="text-body-md text-on-surface-variant">Chargement de l'historique...</p>
+            } @else {
+              <div class="space-y-0 flex-1">
+                @for (item of historique(); track item.id; let i = $index) {
+                  <div class="relative pl-xl pb-xl timeline-item timeline-line">
+                    <div class="absolute left-0 w-6 h-6 rounded-full flex items-center justify-center z-10"
+                         [ngClass]="isEntreeCreation(i) ? 'bg-primary' : 'bg-secondary'">
+                      <span class="material-symbols-outlined text-white text-[14px]">
+                        {{ isEntreeCreation(i) ? 'add_circle' : 'history' }}
+                      </span>
+                    </div>
+                    <div class="space-y-xs">
+                      <div class="flex items-center justify-between">
+                        <p class="text-label-md font-bold text-primary">{{ item.action }}</p>
+                        <span class="text-label-sm text-on-surface-variant">{{ item.dateAction | date: 'dd/MM/yyyy HH:mm' }}</span>
+                      </div>
+                      <div class="flex items-center gap-xs">
+                        <span class="text-label-sm font-semibold text-on-surface-variant">Auteur:</span>
+                        <span class="text-body-md text-on-surface">{{ item.utilisateurEmail }}</span>
+                      </div>
+                      @if (item.details) {
+                        <div class="mt-sm p-sm rounded-lg border"
+                             [ngClass]="isDetailAlerte(item.details)
+                               ? 'bg-error-container/50 border-error-container'
+                               : 'bg-surface-container-low border-outline-variant'">
+                          <p class="text-label-sm font-bold" [ngClass]="isDetailAlerte(item.details) ? 'text-error' : 'text-on-surface-variant'">
+                            {{ item.details }}
+                          </p>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                } @empty {
+                  <p class="text-body-md text-on-surface-variant">Aucune action enregistrée pour ce dossier.</p>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</main>

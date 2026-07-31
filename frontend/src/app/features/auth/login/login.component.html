@@ -1,16 +1,119 @@
-<div class="login-container">
-  <h2>Connexion Conseiller Bancaire</h2>
+<div class="bg-login-substrate min-h-screen flex items-center justify-center p-gutter overflow-hidden relative">
 
-  <form (ngSubmit)="onSubmit()">
-    <input type="email" name="email" [(ngModel)]="email" placeholder="Email" required />
-    <input type="password" name="password" [(ngModel)]="password" placeholder="Mot de passe" required />
+  <!-- Atmospheric Ambient Shapes -->
+  <div class="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+    <div class="absolute -top-[20%] -left-[10%] w-[600px] h-[600px] bg-secondary-container rounded-full blur-[120px]"></div>
+    <div class="absolute -bottom-[20%] -right-[10%] w-[500px] h-[500px] bg-primary-fixed-dim rounded-full blur-[100px]"></div>
+  </div>
 
-    @if (errorMessage()) {
-      <p class="error">{{ errorMessage() }}</p>
-    }
+  <!-- Login Container -->
+  <main class="relative z-10 w-full max-w-[420px] animate-in fade-in zoom-in duration-500">
+    <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-[0px_4px_12px_rgba(27,58,87,0.08)] flex flex-col p-xl">
 
-    <button type="submit" [disabled]="isLoading()">
-      @if (isLoading()) { Connexion en cours... } @else { Se connecter }
-    </button>
-  </form>
+      <!-- Header Section -->
+      <header class="mb-xl text-center">
+        <div class="flex justify-center mb-md">
+          <div class="bg-primary p-sm rounded-lg">
+            <span class="material-symbols-outlined text-on-primary text-[32px]">account_balance</span>
+          </div>
+        </div>
+        <h1 class="text-primary font-headline-md text-headline-md mb-xs">Credit Analysis</h1>
+        <p class="text-on-surface-variant font-body-md text-body-md">Plateforme d'aide à la décision - BTE</p>
+      </header>
+
+      <!-- Login Form -->
+      <form class="space-y-lg" (ngSubmit)="onSubmit()">
+
+        <!-- Email Field -->
+        <div class="space-y-xs">
+          <label class="text-on-surface font-label-md text-label-md" for="email">ADRESSE E-MAIL</label>
+          <div class="relative flex items-center group">
+            <span class="material-symbols-outlined absolute left-md text-outline group-focus-within:text-secondary transition-colors">mail</span>
+            <input
+              class="w-full pl-xl pr-md py-md bg-surface-bright border border-outline-variant rounded-lg text-body-md font-body-md focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-outline/50"
+              id="email"
+              name="email"
+              type="email"
+              placeholder="nom@bte.com.tn"
+              required
+              autocomplete="email"
+              [ngModel]="email()"
+              (ngModelChange)="email.set($event)"
+            />
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div class="space-y-xs">
+          <label class="text-on-surface font-label-md text-label-md" for="password">MOT DE PASSE</label>
+          <div class="relative flex items-center group">
+            <span class="material-symbols-outlined absolute left-md text-outline group-focus-within:text-secondary transition-colors">lock</span>
+            <input
+              class="w-full pl-xl pr-xl py-md bg-surface-bright border border-outline-variant rounded-lg text-body-md font-body-md focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-outline/50"
+              id="password"
+              name="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              placeholder="••••••••"
+              required
+              autocomplete="current-password"
+              [ngModel]="password()"
+              (ngModelChange)="password.set($event)"
+            />
+            <button
+              class="absolute right-md text-outline hover:text-on-surface transition-colors cursor-pointer active:opacity-60"
+              type="button"
+              (click)="togglePasswordVisibility()"
+            >
+              <span class="material-symbols-outlined">
+                {{ showPassword() ? 'visibility_off' : 'visibility' }}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Error Messaging -->
+        @if (errorMessage()) {
+          <div class="flex items-center gap-sm bg-error-container/20 p-sm rounded-lg border border-error/10">
+            <span class="material-symbols-outlined text-error text-[18px]">error</span>
+            <p class="text-error font-body-md text-body-md">{{ errorMessage() }}</p>
+          </div>
+        }
+
+        <!-- Submit Button -->
+        <div class="pt-md">
+          <button
+            class="w-full bg-accent-blue hover:bg-[#256a89] text-on-primary font-title-lg text-title-lg py-md rounded-lg shadow-sm transition-all active:scale-[0.98] focus:ring-4 focus:ring-accent-blue/30 flex items-center justify-center gap-sm disabled:opacity-60 disabled:cursor-not-allowed"
+            type="submit"
+            [disabled]="isLoading()"
+          >
+            @if (isLoading()) {
+              <span class="w-4 h-4 border-2 border-on-primary border-t-transparent rounded-full animate-spin"></span>
+            } @else {
+              <span>Se connecter</span>
+            }
+          </button>
+        </div>
+
+        <!-- Forgot Password -->
+        <div class="text-center">
+          <a class="text-outline hover:text-primary font-body-md text-body-md transition-colors decoration-1 hover:underline underline-offset-4" href="#">
+            Mot de passe oublié ?
+          </a>
+        </div>
+      </form>
+
+      <!-- Card Footer -->
+      <footer class="mt-xl pt-lg border-t border-outline-variant text-center">
+        <p class="text-on-surface-variant font-label-md text-label-md uppercase tracking-wider flex items-center justify-center gap-xs">
+          <span class="material-symbols-outlined text-[14px]">verified_user</span>
+          Accès réservé aux conseillers BTE
+        </p>
+      </footer>
+    </div>
+
+    <!-- Technical Metadata -->
+    <div class="mt-lg text-center opacity-40">
+      <p class="text-on-primary font-label-md text-label-md">© 2024 Banque de Tunisie et des Émirats. Tous droits réservés.</p>
+    </div>
+  </main>
 </div>

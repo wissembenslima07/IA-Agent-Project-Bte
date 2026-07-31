@@ -1,22 +1,48 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Component, signal, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
+import { CommonModule } from '@angular/common';
 
-import { Login } from './login';
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [FormsModule, CommonModule],
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.scss'
+})
+export class LoginComponent {
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
-describe('Login', () => {
-  let component: Login;
-  let fixture: ComponentFixture<Login>;
+  email = signal('');
+  password = signal('');
+  errorMessage = signal<string | null>(null);
+  isLoading = signal(false);
+  showPassword = signal(false);
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [Login],
-    }).compileComponents();
+  togglePasswordVisibility(): void {
+    this.showPassword.update(v => !v);
+  }
 
-    fixture = TestBed.createComponent(Login);
-    component = fixture.componentInstance;
-    await fixture.whenStable();
-  });
+  onSubmit(): void {
+    if (!this.email() || !this.password()) {
+      this.errorMessage.set('Veuillez remplir tous les champs.');
+      return;
+    }
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
-});
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    this.authService.login(this.email(), this.password()).subscribe({
+      next: () => {
+        this.isLoading.set(false);
+        this.router.navigate(['/dashboard']);
+      },
+      error: () => {
+        this.isLoading.set(false);
+        this.errorMessage.set('Email ou mot de passe incorrect.');
+      }
+    });
+  }
+}

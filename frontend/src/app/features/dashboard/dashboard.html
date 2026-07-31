@@ -1,1 +1,224 @@
-<p>dashboard works!</p>
+<div class="flex min-h-screen">
+  <!-- Sidebar fixe -->
+  <aside class="fixed left-0 top-0 h-full w-[240px] bg-primary-container text-white flex flex-col py-xl border-r border-outline-variant z-50">
+    <div class="px-gutter mb-xl">
+      <h1 class="font-headline-sm text-headline-sm font-bold text-white tracking-tight">BTE Banking</h1>
+      <p class="text-on-primary-container text-[11px] uppercase tracking-widest font-semibold mt-xs">Credit Risk Management</p>
+    </div>
+
+    <nav class="flex-1 px-md space-y-xs overflow-y-auto custom-scrollbar">
+      <a *ngFor="let link of navLinks"
+         [routerLink]="link.route"
+         routerLinkActive="bg-secondary-container text-on-secondary-container font-semibold"
+         [routerLinkActiveOptions]="{ exact: link.route === '/dashboard' }"
+         class="flex items-center gap-md px-md py-sm rounded-lg transition-all duration-200 text-on-tertiary-container hover:bg-primary hover:text-white">
+        <span class="material-symbols-outlined">{{ link.icon }}</span>
+        <span class="font-body-md text-body-md">{{ link.label }}</span>
+      </a>
+    </nav>
+
+    <div class="mt-auto px-md pt-xl border-t border-white/10 space-y-sm">
+      <div class="flex items-center gap-md px-md py-sm">
+        <img class="w-10 h-10 rounded-full object-cover border border-white/20"
+             [src]="utilisateur.photoUrl"
+             [alt]="utilisateur.nom" />
+        <div class="flex flex-col">
+          <span class="font-label-md text-label-md font-bold text-white">{{ utilisateur.nom }}</span>
+          <span class="text-[11px] text-on-primary-container">{{ utilisateur.role }}</span>
+        </div>
+      </div>
+
+      <a (click)="seDeconnecter()"
+         class="flex items-center gap-md px-md py-sm text-on-tertiary-container hover:text-error transition-colors cursor-pointer">
+        <span class="material-symbols-outlined">logout</span>
+        <span class="font-body-md text-body-md">Sign Out</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Zone principale -->
+  <div class="flex-1 ml-[240px] flex flex-col">
+    <header class="sticky top-0 z-40 bg-white h-16 flex justify-between items-center px-gutter border-b border-outline-variant">
+      <div class="flex items-center gap-xl">
+        <h2 class="font-title-lg text-title-lg text-primary">Tableau de bord</h2>
+        <div class="relative w-80">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+          <input
+            class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg text-body-md focus:ring-2 focus:ring-secondary outline-none"
+            placeholder="Rechercher un dossier, un client..."
+            type="text"
+            [(ngModel)]="termeRecherche" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-md">
+        <button class="p-2 hover:bg-surface-container-low rounded-full relative transition-colors">
+          <span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+          <span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+        </button>
+        <button class="p-2 hover:bg-surface-container-low rounded-full transition-colors">
+          <span class="material-symbols-outlined text-on-surface-variant">help_outline</span>
+        </button>
+        <div class="h-8 w-[1px] bg-outline-variant mx-sm"></div>
+        <button class="flex items-center gap-sm px-sm py-1 hover:bg-surface-container-low rounded-lg transition-colors">
+          <span class="material-symbols-outlined text-on-surface-variant">apps</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="p-gutter max-w-max-width mx-auto w-full">
+      <!-- En-tete de page -->
+      <div class="flex justify-between items-center mb-xl">
+        <div>
+          <h3 class="font-display-lg text-display-lg text-primary">Vue d'ensemble</h3>
+          <p class="text-on-surface-variant font-body-md">Bienvenue, voici l'état actuel de vos dossiers de crédit.</p>
+        </div>
+        <button (click)="nouveauDossier()"
+                class="flex items-center gap-sm px-lg py-sm bg-secondary text-white font-semibold rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-sm">
+          <span class="material-symbols-outlined">add</span>
+          <span>Nouveau dossier</span>
+        </button>
+      </div>
+
+      <!-- Cartes statistiques -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-xl">
+        <div *ngFor="let stat of statCards"
+             class="bg-white p-lg rounded-xl border border-outline-variant hover:shadow-lg transition-shadow duration-300">
+          <div class="flex items-start justify-between mb-md">
+            <div class="p-2 rounded-lg" [ngClass]="[stat.iconeBgClass, stat.iconeColorClass]">
+              <span class="material-symbols-outlined">{{ stat.icone }}</span>
+            </div>
+            <span *ngIf="stat.badge"
+                  class="text-label-sm font-bold rounded px-2 py-1"
+                  [ngClass]="stat.badgeClass">{{ stat.badge }}</span>
+            <div *ngIf="stat.tendance" class="flex items-center font-bold text-label-md" [ngClass]="stat.tendanceClass">
+              <span class="material-symbols-outlined text-[16px]">trending_up</span>
+              <span>{{ stat.tendance }}</span>
+            </div>
+          </div>
+          <p class="text-on-surface-variant font-label-md uppercase tracking-wider mb-xs">{{ stat.label }}</p>
+          <div class="flex items-baseline gap-sm">
+            <h4 class="text-[40px] font-extrabold text-primary">
+              {{ stat.valeur }}<span *ngIf="stat.suffixe" class="text-title-lg text-on-tertiary-container">{{ stat.suffixe }}</span>
+            </h4>
+          </div>
+          <p class="text-body-md mt-sm" [ngClass]="stat.tendance ? 'text-on-surface-variant' : 'text-secondary font-semibold'">
+            {{ stat.sousTexte }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Tableau des derniers dossiers -->
+      <div class="bg-white rounded-xl border border-outline-variant overflow-hidden">
+        <div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-white">
+          <h5 class="font-headline-sm text-headline-sm text-primary">Derniers dossiers de crédit</h5>
+          <div class="flex items-center gap-md">
+            <button (click)="filtrerDossiers()" class="text-body-md text-secondary font-semibold hover:underline">Filtrer</button>
+            <button (click)="exporterDossiers()" class="text-body-md text-secondary font-semibold hover:underline">Exporter</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-surface-container-low">
+                <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider">Client</th>
+                <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider">Statut</th>
+                <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider">Date de création</th>
+                <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant">
+              <tr *ngFor="let dossier of dossiers" class="hover:bg-surface-container-lowest transition-colors group">
+                <td class="px-lg py-lg">
+                  <div class="flex items-center gap-md">
+                    <div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center font-bold text-primary">
+                      {{ dossier.initiales }}
+                    </div>
+                    <div>
+                      <p class="font-title-lg text-body-lg text-primary leading-tight">{{ dossier.clientNom }}</p>
+                      <p class="text-label-sm text-on-surface-variant">ID: {{ dossier.id }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-lg py-lg">
+                  <span class="inline-flex items-center gap-xs px-md py-1 rounded-full text-label-md font-bold"
+                        [ngClass]="statutBadgeClass(dossier.statut)">
+                    <span class="w-1.5 h-1.5 rounded-full" [ngClass]="statutDotClass(dossier.statut)"></span>
+                    {{ dossier.statut }}
+                  </span>
+                </td>
+                <td class="px-lg py-lg font-body-md text-on-surface-variant">{{ dossier.dateCreation }}</td>
+                <td class="px-lg py-lg text-right">
+                  <button (click)="voirDossier(dossier)"
+                          class="px-md py-sm border border-secondary text-secondary font-semibold rounded-lg hover:bg-secondary hover:text-white transition-all">
+                    Voir le dossier
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="px-lg py-md border-t border-outline-variant flex items-center justify-between">
+          <p class="text-body-md text-on-surface-variant">Affichage de {{ dossiers.length }} sur {{ totalDossiers }} dossiers</p>
+          <div class="flex gap-sm">
+            <button (click)="pagePrecedente()" class="p-1 hover:bg-surface-container-low rounded disabled:opacity-50" disabled>
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <button (click)="pageSuivante()" class="p-1 hover:bg-surface-container-low rounded">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alertes + Assistant IA -->
+      <div class="mt-xl grid grid-cols-1 md:grid-cols-2 gap-gutter">
+        <div class="bg-white p-lg rounded-xl border border-outline-variant">
+          <h5 class="font-headline-sm text-headline-sm text-primary mb-lg">Alertes de risque prioritaires</h5>
+          <div class="space-y-md">
+            <div *ngFor="let alerte of alertes"
+                 class="flex items-start gap-md p-md rounded-lg border"
+                 [ngClass]="alerte.type === 'warning'
+                   ? 'bg-error-container/20 border-error/10'
+                   : 'bg-secondary-container/10 border-secondary/10'">
+              <span class="material-symbols-outlined"
+                    [ngClass]="alerte.type === 'warning' ? 'text-error' : 'text-secondary'">
+                {{ alerte.type === 'warning' ? 'warning' : 'info' }}
+              </span>
+              <div>
+                <p class="font-body-md font-bold"
+                   [ngClass]="alerte.type === 'warning' ? 'text-on-error-container' : 'text-on-secondary-container'">
+                  {{ alerte.titre }}
+                </p>
+                <p class="text-body-md text-on-surface-variant">{{ alerte.description }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-primary text-white p-lg rounded-xl flex flex-col justify-between relative overflow-hidden">
+          <div class="absolute -right-20 -top-20 w-64 h-64 bg-secondary rounded-full blur-[100px] opacity-20"></div>
+          <div>
+            <h5 class="font-headline-sm text-headline-sm mb-sm">Assistant IA Analyste</h5>
+            <p class="text-on-primary-container text-body-md">Optimisez vos décisions grâce à notre moteur d'analyse prédictive.</p>
+          </div>
+          <div class="mt-xl space-y-md">
+            <div class="flex justify-between items-center text-body-md">
+              <span>Précision des scores</span>
+              <span class="font-bold">{{ precisionScoreIA }}%</span>
+            </div>
+            <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+              <div class="bg-secondary h-full" [style.width.%]="precisionScoreIA"></div>
+            </div>
+            <button (click)="lancerAnalyseGlobale()"
+                    class="w-full py-md bg-white text-primary font-bold rounded-lg hover:bg-secondary-fixed transition-colors">
+              Lancer une analyse globale
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>

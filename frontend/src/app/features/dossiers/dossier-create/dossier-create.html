@@ -1,0 +1,179 @@
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full w-[240px] bg-primary-container flex flex-col py-xl border-r border-outline-variant z-50">
+  <div class="px-md mb-xl">
+    <h1 class="font-headline-sm text-headline-sm font-bold text-white leading-tight">BTE Banking</h1>
+    <p class="text-[10px] uppercase tracking-widest text-on-primary-container font-semibold mt-xs">Credit Risk Management</p>
+  </div>
+  <nav class="flex-1 space-y-xs px-sm">
+    <a routerLink="/dashboard" class="flex items-center gap-md px-md py-sm text-on-tertiary-container hover:bg-primary hover:text-white transition-colors duration-200 rounded-lg">
+      <span class="material-symbols-outlined">dashboard</span>
+      <span class="font-body-md text-body-md">Dashboard</span>
+    </a>
+    <a routerLink="/dossiers" class="flex items-center gap-md px-md py-sm text-on-tertiary-container hover:bg-primary hover:text-white transition-colors duration-200 rounded-lg">
+      <span class="material-symbols-outlined">folder_open</span>
+      <span class="font-body-md text-body-md">Credit Files</span>
+    </a>
+    <a class="flex items-center gap-md px-md py-sm bg-secondary-container text-on-secondary-container rounded-lg font-semibold shadow-sm" href="#">
+      <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add_box</span>
+      <span class="font-body-md text-body-md">New File</span>
+    </a>
+    <a href="#" class="flex items-center gap-md px-md py-sm text-on-tertiary-container hover:bg-primary hover:text-white transition-colors duration-200 rounded-lg">
+      <span class="material-symbols-outlined">analytics</span>
+      <span class="font-body-md text-body-md">Reports</span>
+    </a>
+    <a href="#" class="flex items-center gap-md px-md py-sm text-on-tertiary-container hover:bg-primary hover:text-white transition-colors duration-200 rounded-lg">
+      <span class="material-symbols-outlined">settings</span>
+      <span class="font-body-md text-body-md">Settings</span>
+    </a>
+  </nav>
+  <div class="mt-auto px-sm pt-lg border-t border-white/10">
+    <div class="flex items-center gap-md px-md py-sm mb-md bg-white/5 rounded-xl">
+      <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-bold">JD</div>
+      <div class="overflow-hidden">
+        <p class="font-label-md text-label-md text-white truncate">Jean Dupont</p>
+        <p class="text-[10px] text-on-primary-container truncate">Advisor Profile</p>
+      </div>
+    </div>
+    <a href="#" class="flex items-center gap-md px-md py-sm text-on-tertiary-container hover:text-white transition-colors">
+      <span class="material-symbols-outlined">logout</span>
+      <span class="font-body-md text-body-md">Sign Out</span>
+    </a>
+  </div>
+</aside>
+
+<!-- Main Content Area -->
+<main class="flex-1 ml-[240px] flex flex-col min-h-screen">
+  <!-- TopNavBar Shell -->
+  <header class="flex justify-between items-center h-16 px-gutter w-full sticky top-0 bg-surface-container-lowest border-b border-outline-variant z-40">
+    <div class="flex items-center gap-xl flex-1">
+      <h2 class="font-title-lg text-title-lg text-primary whitespace-nowrap">Nouveau dossier de crédit</h2>
+    </div>
+  </header>
+
+  <!-- Page Canvas -->
+  <div class="p-gutter max-w-[1200px] mx-auto w-full">
+    <!-- Breadcrumbs -->
+    <nav class="mb-lg">
+      <ol class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
+        <li><a class="hover:text-primary transition-colors cursor-pointer" (click)="onCancel()">Dossiers de crédit</a></li>
+        <li class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+          <span class="text-primary font-semibold">Nouveau dossier</span>
+        </li>
+      </ol>
+    </nav>
+
+    <!-- Title & Subtitle -->
+    <div class="mb-xl">
+      <h3 class="font-headline-md text-headline-md text-primary mb-xs">Nouveau dossier de crédit</h3>
+      <p class="font-body-md text-body-md text-on-surface-variant">Renseignez les informations du client pour initier une demande.</p>
+    </div>
+
+    <!-- Erreur API -->
+    @if (errorMessage()) {
+      <div class="max-w-[700px] mx-auto mb-lg bg-error-container text-error px-lg py-md rounded-xl">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <!-- Form Card -->
+    <div class="max-w-[700px] mx-auto bg-white rounded-xl shadow-[0px_4px_12px_rgba(27,58,87,0.08)] border border-outline-variant overflow-hidden">
+      <div class="p-lg">
+        <form class="space-y-xl" [formGroup]="form" (ngSubmit)="onSubmit()">
+          <!-- Informations client -->
+          <section>
+            <h4 class="font-label-md text-label-md text-primary uppercase tracking-wider mb-md border-l-4 border-secondary pl-3">Informations client</h4>
+            <div class="grid grid-cols-2 gap-lg">
+              <div class="space-y-xs">
+                <label class="font-label-md text-label-md text-on-surface-variant" for="firstname">Prénom du client</label>
+                <input
+                  id="firstname"
+                  formControlName="firstname"
+                  class="w-full rounded-lg border-outline-variant focus:border-secondary focus:ring-1 focus:ring-secondary transition-all text-body-md h-11 px-md"
+                  placeholder="Ex: Marc"
+                  type="text" />
+                @if (f.firstname.invalid && f.firstname.touched) {
+                  <p class="text-label-sm text-error">Le prénom est requis (2 caractères minimum).</p>
+                }
+              </div>
+              <div class="space-y-xs">
+                <label class="font-label-md text-label-md text-on-surface-variant" for="lastname">Nom du client</label>
+                <input
+                  id="lastname"
+                  formControlName="lastname"
+                  class="w-full rounded-lg border-outline-variant focus:border-secondary focus:ring-1 focus:ring-secondary transition-all text-body-md h-11 px-md"
+                  placeholder="Ex: Lefebvre"
+                  type="text" />
+                @if (f.lastname.invalid && f.lastname.touched) {
+                  <p class="text-label-sm text-error">Le nom est requis (2 caractères minimum).</p>
+                }
+              </div>
+            </div>
+          </section>
+
+          <!-- Informations complémentaires -->
+          <section>
+            <h4 class="font-label-md text-label-md text-primary uppercase tracking-wider mb-md border-l-4 border-secondary pl-3">Informations complémentaires</h4>
+            <div class="grid grid-cols-2 gap-lg">
+              <div class="space-y-xs">
+                <label class="font-label-md text-label-md text-on-surface-variant" for="phone">Numéro de téléphone</label>
+                <input
+                  id="phone"
+                  formControlName="phone"
+                  class="w-full rounded-lg border-outline-variant focus:border-secondary focus:ring-1 focus:ring-secondary transition-all text-body-md h-11 px-md"
+                  placeholder="+216 71 000 000"
+                  type="tel" />
+                <p class="text-[10px] text-on-surface-variant italic">Non transmis à l'API pour l'instant (champ absent de DossierService.creer()).</p>
+              </div>
+              <div class="space-y-xs">
+                <label class="font-label-md text-label-md text-on-surface-variant" for="email">Email du client</label>
+                <input
+                  id="email"
+                  formControlName="email"
+                  class="w-full rounded-lg border-outline-variant focus:border-secondary focus:ring-1 focus:ring-secondary transition-all text-body-md h-11 px-md"
+                  placeholder="client@exemple.tn"
+                  type="email" />
+                @if (f.email.invalid && f.email.touched) {
+                  <p class="text-label-sm text-error">Veuillez saisir une adresse email valide.</p>
+                }
+                <p class="text-[10px] text-on-surface-variant italic">Non transmis à l'API pour l'instant (champ absent de DossierService.creer()).</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Info Box -->
+          <div class="bg-secondary-fixed/30 rounded-lg p-md flex gap-md border border-secondary-fixed">
+            <span class="material-symbols-outlined text-secondary shrink-0">info</span>
+            <p class="font-body-md text-body-md text-on-secondary-fixed-variant leading-snug">
+              Une fois le dossier créé, vous pourrez y associer les documents justificatifs du client
+              (fiches de paie, relevés bancaires, pièce d'identité).
+            </p>
+          </div>
+        </form>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="bg-surface-container-low p-lg border-t border-outline-variant flex justify-end gap-md">
+        <button
+          type="button"
+          (click)="onCancel()"
+          [disabled]="isSubmitting()"
+          class="px-xl py-base rounded-lg border border-secondary bg-white text-secondary font-label-md text-label-md hover:bg-secondary-fixed/20 transition-colors disabled:opacity-50">
+          Annuler
+        </button>
+        <button
+          type="submit"
+          (click)="onSubmit()"
+          [disabled]="isSubmitting()"
+          class="px-xl py-base rounded-lg bg-primary text-white font-label-md text-label-md shadow-md hover:bg-primary-container transition-all active:scale-[0.98] flex items-center gap-2 disabled:opacity-80 disabled:cursor-not-allowed">
+          @if (isSubmitting()) {
+            <span class="material-symbols-outlined loading-spinner text-[20px]">progress_activity</span>
+            <span>Création en cours...</span>
+          } @else {
+            <span>Créer le dossier</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+</main>

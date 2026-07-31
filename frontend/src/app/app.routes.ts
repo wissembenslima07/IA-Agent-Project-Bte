@@ -11,6 +11,15 @@ export const routes: Routes = [
     loadComponent: () => import('./features/dashboard/dashboard').then(m => m.DashboardComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'dossiers',
+    canActivate: [authGuard],
+    children: [
+      { path: '', loadComponent: () => import('./features/dossiers/dossier-list/dossier-list').then(m => m.DossierListComponent) },
+      { path: 'nouveau', loadComponent: () => import('./features/dossiers/dossier-create/dossier-create').then(m => m.DossierCreateComponent) },
+      { path: ':id', loadComponent: () => import('./features/dossiers/dossier-detail/dossier-detail').then(m => m.DossierDetailComponent) },
+    ]
+  },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: '**', redirectTo: 'login' }
 ];
