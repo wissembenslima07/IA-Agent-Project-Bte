@@ -3,6 +3,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DossierService, Dossier } from '../../../core/services/dossier.service';
+import { SidebarComponent } from '../../../shared/components/sidebar/sidebar';
 
 type StatutFilter = 'TOUS' | Dossier['statut'];
 type SortOption = 'date' | 'nom';
@@ -10,7 +11,7 @@ type SortOption = 'date' | 'nom';
 @Component({
   selector: 'app-dossier-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule,SidebarComponent],
   templateUrl: './dossier-list.html'
 })
 export class DossierListComponent implements OnInit {

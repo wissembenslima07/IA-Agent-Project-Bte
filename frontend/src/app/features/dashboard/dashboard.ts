@@ -3,6 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { SidebarComponent } from '../../shared/components/sidebar/sidebar';
 
 export type DossierStatut = 'En cours' | 'Validé' | 'Refusé';
 
@@ -34,6 +35,8 @@ export interface StatCard {
   sousTexte: string;
 }
 
+
+
 export interface NavLink {
   icon: string;
   label: string;
@@ -43,7 +46,7 @@ export interface NavLink {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, FormsModule, RouterLink,  SidebarComponent],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss']
 })
@@ -51,21 +54,7 @@ export class DashboardComponent implements OnInit {
   private router = inject(Router);
   private authService = inject(AuthService);
 
-  navLinks: NavLink[] = [
-    { icon: 'dashboard', label: 'Tableau de bord', route: '/dashboard' },
-    { icon: 'folder_open', label: 'Dossiers de crédit', route: '/dossiers' },
-    { icon: 'add_box', label: 'Nouveau dossier', route: '/dossiers/nouveau' },
-    { icon: 'analytics', label: 'Rapports', route: '/rapports' },
-    { icon: 'settings', label: 'Paramètres', route: '/parametres' }
-  ];
-
-  utilisateur = {
-    nom: 'Jean Dupont',
-    role: 'Conseiller Bancaire',
-    photoUrl:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuA5TixuSaCENYOQEesSE9seFxISZhuJ9ijTteYDJUp0U0BOJnmSuFqvyGjyvpY4jSan4rj0ihysLDExFmd-oZtA1kYuzq3A6FIE4WyVqfEp3PrUrr8QLqS29lNyQFLcEcdaYbxRIEgjcXSTU-BlaCEQblWZnl7fY4ZgZ1vg6Eloh4gISCsOPV1Coxd-9_tCUO7sTFwgKzevmgSnIVQYRInVw4_IzFiRENog4oPPwENbZvcho3oU34lthHOJpP0rLfqKSNkLFyqT2x-Y'
-  };
-
+ 
   termeRecherche = '';
 
   statCards: StatCard[] = [

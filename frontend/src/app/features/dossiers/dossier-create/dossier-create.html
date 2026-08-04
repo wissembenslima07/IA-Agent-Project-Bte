@@ -1,45 +1,5 @@
 <!-- SideNavBar Shell -->
-<aside class="fixed left-0 top-0 h-full w-[240px] bg-primary-container flex flex-col py-xl border-r border-outline-variant z-50">
-  <div class="px-md mb-xl">
-    <h1 class="font-headline-sm text-headline-sm font-bold text-white leading-tight">BTE Banking</h1>
-    <p class="text-[10px] uppercase tracking-widest text-on-primary-container font-semibold mt-xs">Credit Risk Management</p>
-  </div>
-  <nav class="flex-1 space-y-xs px-sm">
-    <a routerLink="/dashboard" class="flex items-center gap-md px-md py-sm text-on-tertiary-container hover:bg-primary hover:text-white transition-colors duration-200 rounded-lg">
-      <span class="material-symbols-outlined">dashboard</span>
-      <span class="font-body-md text-body-md">Dashboard</span>
-    </a>
-    <a routerLink="/dossiers" class="flex items-center gap-md px-md py-sm text-on-tertiary-container hover:bg-primary hover:text-white transition-colors duration-200 rounded-lg">
-      <span class="material-symbols-outlined">folder_open</span>
-      <span class="font-body-md text-body-md">Credit Files</span>
-    </a>
-    <a class="flex items-center gap-md px-md py-sm bg-secondary-container text-on-secondary-container rounded-lg font-semibold shadow-sm" href="#">
-      <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add_box</span>
-      <span class="font-body-md text-body-md">New File</span>
-    </a>
-    <a href="#" class="flex items-center gap-md px-md py-sm text-on-tertiary-container hover:bg-primary hover:text-white transition-colors duration-200 rounded-lg">
-      <span class="material-symbols-outlined">analytics</span>
-      <span class="font-body-md text-body-md">Reports</span>
-    </a>
-    <a href="#" class="flex items-center gap-md px-md py-sm text-on-tertiary-container hover:bg-primary hover:text-white transition-colors duration-200 rounded-lg">
-      <span class="material-symbols-outlined">settings</span>
-      <span class="font-body-md text-body-md">Settings</span>
-    </a>
-  </nav>
-  <div class="mt-auto px-sm pt-lg border-t border-white/10">
-    <div class="flex items-center gap-md px-md py-sm mb-md bg-white/5 rounded-xl">
-      <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-bold">JD</div>
-      <div class="overflow-hidden">
-        <p class="font-label-md text-label-md text-white truncate">Jean Dupont</p>
-        <p class="text-[10px] text-on-primary-container truncate">Advisor Profile</p>
-      </div>
-    </div>
-    <a href="#" class="flex items-center gap-md px-md py-sm text-on-tertiary-container hover:text-white transition-colors">
-      <span class="material-symbols-outlined">logout</span>
-      <span class="font-body-md text-body-md">Sign Out</span>
-    </a>
-  </div>
-</aside>
+<app-sidebar></app-sidebar>
 
 <!-- Main Content Area -->
 <main class="flex-1 ml-[240px] flex flex-col min-h-screen">

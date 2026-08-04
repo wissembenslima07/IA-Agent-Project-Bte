@@ -1,0 +1,39 @@
+<aside class="fixed left-0 top-0 h-full w-[240px] bg-primary-container text-white flex flex-col py-xl border-r border-outline-variant z-50">
+  <div class="px-gutter mb-xl">
+    <h1 class="font-headline-sm text-headline-sm font-bold text-white tracking-tight">BTE Banking</h1>
+    <p class="text-on-primary-container text-[11px] uppercase tracking-widest font-semibold mt-xs">Credit Risk Management</p>
+  </div>
+
+  <nav class="flex-1 px-md space-y-xs overflow-y-auto custom-scrollbar">
+    <a *ngFor="let link of navLinks"
+       [routerLink]="link.route"
+       routerLinkActive="bg-secondary-container text-on-secondary-container font-semibold"
+       [routerLinkActiveOptions]="{ exact: link.route === '/dashboard' }"
+       class="flex items-center gap-md px-md py-sm rounded-lg transition-all duration-200 text-on-tertiary-container hover:bg-primary hover:text-white">
+      <span class="material-symbols-outlined">{{ link.icon }}</span>
+      <span class="font-body-md text-body-md">{{ link.label }}</span>
+    </a>
+  </nav>
+
+  <div class="mt-auto px-md pt-xl border-t border-white/10 space-y-sm">
+    <div class="flex items-center gap-md px-md py-sm">
+      <img class="w-10 h-10 rounded-full object-cover border border-white/20"
+           [src]="'https://ui-avatars.com/api/?name=' + (utilisateurConnecte()?.prenom ?? '') + '+' + (utilisateurConnecte()?.nom ?? '') + '&background=2E86AB&color=fff'"
+           [alt]="utilisateurConnecte()?.nom" />
+      <div class="flex flex-col">
+        <span class="font-label-md text-label-md font-bold text-white">
+          {{ utilisateurConnecte()?.prenom }} {{ utilisateurConnecte()?.nom }}
+        </span>
+        <span class="text-[11px] text-on-primary-container">
+          {{ utilisateurConnecte()?.role === 'ADMIN' ? 'Administrateur' : 'Conseiller Bancaire' }}
+        </span>
+      </div>
+    </div>
+
+    <a (click)="seDeconnecter()"
+       class="flex items-center gap-md px-md py-sm text-on-tertiary-container hover:text-error transition-colors cursor-pointer">
+      <span class="material-symbols-outlined">logout</span>
+      <span class="font-body-md text-body-md">Sign Out</span>
+    </a>
+  </div>
+</aside>

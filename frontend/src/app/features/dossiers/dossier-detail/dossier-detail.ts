@@ -2,11 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DossierService, Dossier, HistoriqueAction } from '../../../core/services/dossier.service';
+import { SidebarComponent } from '../../../shared/components/sidebar/sidebar';
 
 @Component({
   selector: 'app-dossier-detail',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule,SidebarComponent],
   templateUrl: './dossier-detail.html',
   styleUrl: './dossier-detail.scss'
 })
