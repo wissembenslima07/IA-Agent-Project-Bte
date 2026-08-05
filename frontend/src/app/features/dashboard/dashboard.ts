@@ -1,19 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { AuthService } from '../../core/services/auth.service';
+import { Router } from '@angular/router';
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar';
-
-export type DossierStatut = 'En cours' | 'Validé' | 'Refusé';
-
-export interface Dossier {
-  id: string;
-  clientNom: string;
-  initiales: string;
-  statut: DossierStatut;
-  dateCreation: string;
-}
+import { DossierService, Dossier as DossierBackend } from '../../core/services/dossier.service';
 
 export interface AlerteRisque {
   type: 'warning' | 'info';
@@ -35,90 +25,101 @@ export interface StatCard {
   sousTexte: string;
 }
 
-
-
-export interface NavLink {
-  icon: string;
-  label: string;
-  route: string;
-}
-
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink,  SidebarComponent],
+  imports: [CommonModule, FormsModule, SidebarComponent],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss']
 })
 export class DashboardComponent implements OnInit {
   private router = inject(Router);
-  private authService = inject(AuthService);
+  private dossierService = inject(DossierService);
 
- 
   termeRecherche = '';
+  isLoading = signal(true);
 
-  statCards: StatCard[] = [
+  dossiers = signal<DossierBackend[]>([]);
+  totalDossiers = signal(0);
+
+  ngOnInit(): void {
+    this.chargerDossiers();
+  }
+
+  chargerDossiers(): void {
+    this.isLoading.set(true);
+    // On recupere une page suffisamment large pour calculer des stats correctes
+    // (a terme, un endpoint /api/dossiers/stats dedie serait plus propre - voir note)
+    this.dossierService.lister(0, 100).subscribe({
+      next: (res) => {
+        this.dossiers.set(res.content);
+        this.totalDossiers.set(res.totalElements);
+        this.isLoading.set(false);
+      },
+      error: () => this.isLoading.set(false)
+    });
+  }
+
+  // Les 4 derniers dossiers, tries par date de creation decroissante
+  dernierDossiers = computed(() =>
+    [...this.dossiers()]
+      .sort((a, b) => new Date(b.dateCreation).getTime() - new Date(a.dateCreation).getTime())
+      .slice(0, 4)
+  );
+
+  nombreDossiersEnCours = computed(() =>
+    this.dossiers().filter(d => d.statut === 'EN_COURS' || d.statut === 'EN_ANALYSE').length
+  );
+
+  nombreDossiersValidesCeMois = computed(() => {
+    const maintenant = new Date();
+    return this.dossiers().filter(d => {
+      if (d.statut !== 'VALIDE') return false;
+      const date = new Date(d.dateCreation);
+      return date.getMonth() === maintenant.getMonth() && date.getFullYear() === maintenant.getFullYear();
+    }).length;
+  });
+
+  statCards = computed<StatCard[]>(() => [
     {
       icone: 'pending_actions',
       iconeBgClass: 'bg-blue-50',
       iconeColorClass: 'text-secondary',
       label: 'Dossiers en cours',
-      valeur: '24',
+      valeur: String(this.nombreDossiersEnCours()),
       suffixe: 'unités',
       badge: 'TEMPS RÉEL',
       badgeClass: 'text-on-surface-variant bg-surface-container',
-      sousTexte: "8 en attente d'IA"
+      sousTexte: `${this.totalDossiers()} dossiers au total`
     },
     {
       icone: 'task_alt',
       iconeBgClass: 'bg-green-50',
       iconeColorClass: 'text-green-600',
       label: 'Dossiers validés ce mois',
-      valeur: '12',
-      tendance: '15%',
-      tendanceClass: 'text-green-600',
-      sousTexte: 'vs mois dernier'
+      valeur: String(this.nombreDossiersValidesCeMois()),
+      sousTexte: 'Sur le mois en cours'
     },
     {
       icone: 'analytics',
       iconeBgClass: 'bg-orange-50',
       iconeColorClass: 'text-orange-600',
       label: 'Score moyen de risque',
-      valeur: '72',
+      valeur: '—',
       suffixe: '/100',
-      badge: 'MODÉRÉ',
-      badgeClass: 'text-orange-600 bg-orange-50',
-      sousTexte: 'Niveau de risque global'
+      badge: 'BIENTÔT',
+      badgeClass: 'text-on-surface-variant bg-surface-container',
+      sousTexte: "Disponible apres integration de l'agent IA"
     }
-  ];
+  ]);
 
-  dossiers: Dossier[] = [
-    { id: '#45920-FR', clientNom: 'SOCIETE HEXAGON', initiales: 'SH', statut: 'En cours', dateCreation: '12/10/2023' },
-    { id: '#45921-TN', clientNom: 'Ahmed Mansour', initiales: 'AM', statut: 'Validé', dateCreation: '11/10/2023' },
-    { id: '#45922-TN', clientNom: "SARL L'OLIVIER", initiales: 'SL', statut: 'Refusé', dateCreation: '11/10/2023' },
-    { id: '#45925-TN', clientNom: 'Tunis Prime Ltd', initiales: 'TP', statut: 'En cours', dateCreation: '10/10/2023' }
-  ];
+  // Pas encore de vraies alertes IA (Rule Engine = sprint ulterieur) :
+  // tableau vide plutot que des donnees inventees
+  alertes: AlerteRisque[] = [];
 
-  totalDossiers = 24;
+  precisionScoreIA: number | null = null;
 
-  alertes: AlerteRisque[] = [
-    {
-      type: 'warning',
-      titre: "Incohérence détectée : SARL L'OLIVIER",
-      description: "Le ratio d'endettement dépasse les limites autorisées par la politique BTE 2023."
-    },
-    {
-      type: 'info',
-      titre: 'Information manquante : SOCIETE HEXAGON',
-      description: "Le bilan certifié de l'exercice 2022 est requis pour finaliser l'analyse."
-    }
-  ];
-
-  precisionScoreIA = 98.2;
-
-  ngOnInit(): void {}
-
-  voirDossier(dossier: Dossier): void {
+  voirDossier(dossier: DossierBackend): void {
     this.router.navigate(['/dossiers', dossier.id]);
   }
 
@@ -127,7 +128,7 @@ export class DashboardComponent implements OnInit {
   }
 
   lancerAnalyseGlobale(): void {
-    console.log('Lancement de l\'analyse IA globale');
+    console.log("Fonctionnalite disponible apres integration de l'agent IA");
   }
 
   filtrerDossiers(): void {
@@ -135,29 +136,40 @@ export class DashboardComponent implements OnInit {
   }
 
   exporterDossiers(): void {
-    console.log('Exporter les dossiers');
+    console.log('Export a implementer');
   }
 
-  seDeconnecter(): void {
-    this.authService.logout();
-  }
-
-  pagePrecedente(): void {}
-  pageSuivante(): void {}
-
-  statutBadgeClass(statut: DossierStatut): string {
+  statutBadgeClass(statut: string): string {
     switch (statut) {
-      case 'En cours': return 'bg-[#E1F1F8] text-[#2E86AB]';
-      case 'Validé': return 'bg-[#E9F7EF] text-[#28A745]';
-      case 'Refusé': return 'bg-[#FDECEA] text-[#DC3545]';
+      case 'EN_COURS': return 'bg-[#E1F1F8] text-[#2E86AB]';
+      case 'EN_ANALYSE': return 'bg-[#FFF3E0] text-[#E67E22]';
+      case 'VALIDE': return 'bg-[#E9F7EF] text-[#28A745]';
+      case 'REFUSE': return 'bg-[#FDECEA] text-[#DC3545]';
+      default: return 'bg-surface-container text-on-surface-variant';
     }
   }
 
-  statutDotClass(statut: DossierStatut): string {
+  statutDotClass(statut: string): string {
     switch (statut) {
-      case 'En cours': return 'bg-[#2E86AB]';
-      case 'Validé': return 'bg-[#28A745]';
-      case 'Refusé': return 'bg-[#DC3545]';
+      case 'EN_COURS': return 'bg-[#2E86AB]';
+      case 'EN_ANALYSE': return 'bg-[#E67E22]';
+      case 'VALIDE': return 'bg-[#28A745]';
+      case 'REFUSE': return 'bg-[#DC3545]';
+      default: return 'bg-on-surface-variant';
     }
+  }
+
+  statutLabel(statut: string): string {
+    switch (statut) {
+      case 'EN_COURS': return 'En cours';
+      case 'EN_ANALYSE': return 'En analyse';
+      case 'VALIDE': return 'Validé';
+      case 'REFUSE': return 'Refusé';
+      default: return statut;
+    }
+  }
+
+  initiales(dossier: DossierBackend): string {
+    return `${dossier.clientPrenom.charAt(0)}${dossier.clientNom.charAt(0)}`.toUpperCase();
   }
 }

@@ -34,7 +34,7 @@ public class DossierCreditController {
             @AuthenticationPrincipal Utilisateur conseiller,
             Pageable pageable) {
         return ResponseEntity.ok(
-            dossierCreditService.listerDossiersDuConseiller(conseiller.getId(), pageable)
+            dossierCreditService.listerDossiers(conseiller, pageable)
         );
     }
 
@@ -55,4 +55,4 @@ public class DossierCreditController {
     public ResponseEntity<List<HistoriqueActionResponse>> historique(@PathVariable Long id) {
         return ResponseEntity.ok(dossierCreditService.consulterHistorique(id));
     }
-}
+}   

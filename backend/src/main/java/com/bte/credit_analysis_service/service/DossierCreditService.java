@@ -42,6 +42,19 @@ public class DossierCreditService {
             .map(this::toResponse);
     }
 
+    public Page<DossierResponse> listerDossiers(Utilisateur utilisateur, Pageable pageable) {
+        if (utilisateur != null && utilisateur.getRole() == com.bte.credit_analysis_service.model.Role.ADMIN) {
+            return dossierCreditRepository.findAll(pageable).map(this::toResponse);
+        }
+        // Par défaut, on filtre par conseiller
+        Long conseillerId = utilisateur != null ? utilisateur.getId() : null;
+        if (conseillerId == null) {
+            // Aucun utilisateur authentifié: renvoyer page vide
+            return Page.<DossierCredit>empty(pageable).map(this::toResponse);
+        }
+        return listerDossiersDuConseiller(conseillerId, pageable);
+    }
+
     public DossierResponse consulterDossier(Long dossierId) {
         DossierCredit dossier = dossierCreditRepository.findById(dossierId)
             .orElseThrow(() -> new EntityNotFoundException("Dossier introuvable : " + dossierId));

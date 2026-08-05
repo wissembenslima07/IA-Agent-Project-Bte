@@ -48,7 +48,7 @@
 
       <!-- Cartes statistiques -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-xl">
-        <div *ngFor="let stat of statCards"
+      <div *ngFor="let stat of statCards()"
              class="bg-white p-lg rounded-xl border border-outline-variant hover:shadow-lg transition-shadow duration-300">
           <div class="flex items-start justify-between mb-md">
             <div class="p-2 rounded-lg" [ngClass]="[stat.iconeBgClass, stat.iconeColorClass]">
@@ -84,103 +84,111 @@
           </div>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-surface-container-low">
-                <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider">Client</th>
-                <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider">Statut</th>
-                <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider">Date de création</th>
-                <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-outline-variant">
-              <tr *ngFor="let dossier of dossiers" class="hover:bg-surface-container-lowest transition-colors group">
-                <td class="px-lg py-lg">
-                  <div class="flex items-center gap-md">
-                    <div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center font-bold text-primary">
-                      {{ dossier.initiales }}
-                    </div>
-                    <div>
-                      <p class="font-title-lg text-body-lg text-primary leading-tight">{{ dossier.clientNom }}</p>
-                      <p class="text-label-sm text-on-surface-variant">ID: {{ dossier.id }}</p>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-lg py-lg">
-                  <span class="inline-flex items-center gap-xs px-md py-1 rounded-full text-label-md font-bold"
-                        [ngClass]="statutBadgeClass(dossier.statut)">
-                    <span class="w-1.5 h-1.5 rounded-full" [ngClass]="statutDotClass(dossier.statut)"></span>
-                    {{ dossier.statut }}
-                  </span>
-                </td>
-                <td class="px-lg py-lg font-body-md text-on-surface-variant">{{ dossier.dateCreation }}</td>
-                <td class="px-lg py-lg text-right">
-                  <button (click)="voirDossier(dossier)"
-                          class="px-md py-sm border border-secondary text-secondary font-semibold rounded-lg hover:bg-secondary hover:text-white transition-all">
-                    Voir le dossier
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <ng-container *ngIf="isLoading(); else loadedDossiers">
+          <div class="p-lg text-center text-on-surface-variant">Chargement des dossiers...</div>
+        </ng-container>
 
-        <div class="px-lg py-md border-t border-outline-variant flex items-center justify-between">
-          <p class="text-body-md text-on-surface-variant">Affichage de {{ dossiers.length }} sur {{ totalDossiers }} dossiers</p>
-          <div class="flex gap-sm">
-            <button (click)="pagePrecedente()" class="p-1 hover:bg-surface-container-low rounded disabled:opacity-50" disabled>
-              <span class="material-symbols-outlined">chevron_left</span>
-            </button>
-            <button (click)="pageSuivante()" class="p-1 hover:bg-surface-container-low rounded">
-              <span class="material-symbols-outlined">chevron_right</span>
-            </button>
+        <ng-template #loadedDossiers>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-surface-container-low">
+                  <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider">Client</th>
+                  <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider">Conseiller</th>
+                  <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider">Statut</th>
+                  <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider">Date de création</th>
+                  <th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-outline-variant">
+                <ng-container *ngIf="dernierDossiers() && dernierDossiers().length > 0; else emptyDossiers">
+                  <tr *ngFor="let dossier of dernierDossiers()" class="hover:bg-surface-container-lowest transition-colors group">
+                    <td class="px-lg py-lg">
+                      <div class="flex items-center gap-md">
+                        <div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center font-bold text-primary">
+                          {{ initiales(dossier) }}
+                        </div>
+                        <div>
+                          <p class="font-title-lg text-body-lg text-primary leading-tight">{{ dossier.clientPrenom }} {{ dossier.clientNom }}</p>
+                          <p class="text-label-sm text-on-surface-variant">ID: #{{ dossier.id }}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-lg py-lg">
+                      <div>
+                        <p class="font-body-md font-bold text-primary">{{ dossier.conseillerEmail || '—' }}</p>
+                        <!-- si vous avez le nom du conseiller, remplacez par dossier.conseillerNom -->
+                      </div>
+                    </td>
+                    <td class="px-lg py-lg">
+                      <span class="inline-flex items-center gap-xs px-md py-1 rounded-full text-label-md font-bold"
+                            [ngClass]="statutBadgeClass(dossier.statut)">
+                        <span class="w-1.5 h-1.5 rounded-full" [ngClass]="statutDotClass(dossier.statut)"></span>
+                        {{ statutLabel(dossier.statut) }}
+                      </span>
+                    </td>
+                    <td class="px-lg py-lg font-body-md text-on-surface-variant">{{ dossier.dateCreation | date:'dd/MM/yyyy' }}</td>
+                    <td class="px-lg py-lg text-right">
+                      <button (click)="voirDossier(dossier)"
+                              class="px-md py-sm border border-secondary text-secondary font-semibold rounded-lg hover:bg-secondary hover:text-white transition-all">
+                        Voir le dossier
+                      </button>
+                    </td>
+                  </tr>
+                </ng-container>
+
+                <ng-template #emptyDossiers>
+                  <tr>
+                    <td colspan="5" class="px-lg py-xl text-center text-on-surface-variant">
+                      Aucun dossier de crédit pour le moment.
+                    </td>
+                  </tr>
+                </ng-template>
+              </tbody>
+            </table>
           </div>
-        </div>
+
+          <div class="px-lg py-md border-t border-outline-variant flex items-center justify-between">
+            <p class="text-body-md text-on-surface-variant">Affichage de {{ dernierDossiers()?.length || 0 }} sur {{ totalDossiers() }} dossiers</p>
+          </div>
+        </ng-template>
       </div>
 
       <!-- Alertes + Assistant IA -->
       <div class="mt-xl grid grid-cols-1 md:grid-cols-2 gap-gutter">
         <div class="bg-white p-lg rounded-xl border border-outline-variant">
           <h5 class="font-headline-sm text-headline-sm text-primary mb-lg">Alertes de risque prioritaires</h5>
-          <div class="space-y-md">
-            <div *ngFor="let alerte of alertes"
-                 class="flex items-start gap-md p-md rounded-lg border"
-                 [ngClass]="alerte.type === 'warning'
-                   ? 'bg-error-container/20 border-error/10'
-                   : 'bg-secondary-container/10 border-secondary/10'">
-              <span class="material-symbols-outlined"
-                    [ngClass]="alerte.type === 'warning' ? 'text-error' : 'text-secondary'">
-                {{ alerte.type === 'warning' ? 'warning' : 'info' }}
-              </span>
-              <div>
-                <p class="font-body-md font-bold"
-                   [ngClass]="alerte.type === 'warning' ? 'text-on-error-container' : 'text-on-secondary-container'">
-                  {{ alerte.titre }}
-                </p>
-                <p class="text-body-md text-on-surface-variant">{{ alerte.description }}</p>
+          <ng-container *ngIf="alertes?.length === 0; else alertesList">
+            <p class="text-body-md text-on-surface-variant">
+              Aucune alerte pour le moment — disponible après intégration du moteur de règles métier.
+            </p>
+          </ng-container>
+          <ng-template #alertesList>
+            <div class="space-y-md">
+              <div *ngFor="let alerte of alertes" class="flex items-start gap-md p-md rounded-lg border"
+                   [ngClass]="alerte.type === 'warning' ? 'bg-error-container/20 border-error/10' : 'bg-secondary-container/10 border-secondary/10'">
+                <span class="material-symbols-outlined" [ngClass]="alerte.type === 'warning' ? 'text-error' : 'text-secondary'">
+                  {{ alerte.type === 'warning' ? 'warning' : 'info' }}
+                </span>
+                <div>
+                  <p class="font-body-md font-bold" [ngClass]="alerte.type === 'warning' ? 'text-on-error-container' : 'text-on-secondary-container'">{{ alerte.titre }}</p>
+                  <p class="text-body-md text-on-surface-variant">{{ alerte.description }}</p>
+                </div>
               </div>
             </div>
-          </div>
+          </ng-template>
         </div>
 
         <div class="bg-primary text-white p-lg rounded-xl flex flex-col justify-between relative overflow-hidden">
           <div class="absolute -right-20 -top-20 w-64 h-64 bg-secondary rounded-full blur-[100px] opacity-20"></div>
           <div>
             <h5 class="font-headline-sm text-headline-sm mb-sm">Assistant IA Analyste</h5>
-            <p class="text-on-primary-container text-body-md">Optimisez vos décisions grâce à notre moteur d'analyse prédictive.</p>
+            <p class="text-on-primary-container text-body-md">L'analyse prédictive sera disponible après l'intégration de l'agent IA (sprints à venir).</p>
           </div>
-          <div class="mt-xl space-y-md">
-            <div class="flex justify-between items-center text-body-md">
-              <span>Précision des scores</span>
-              <span class="font-bold">{{ precisionScoreIA }}%</span>
-            </div>
-            <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-              <div class="bg-secondary h-full" [style.width.%]="precisionScoreIA"></div>
-            </div>
-            <button (click)="lancerAnalyseGlobale()"
-                    class="w-full py-md bg-white text-primary font-bold rounded-lg hover:bg-secondary-fixed transition-colors">
-              Lancer une analyse globale
+          <div class="mt-xl">
+            <button disabled
+                    class="w-full py-md bg-white/40 text-primary font-bold rounded-lg cursor-not-allowed">
+              Bientôt disponible
             </button>
           </div>
         </div>

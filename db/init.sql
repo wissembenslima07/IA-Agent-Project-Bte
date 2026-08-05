@@ -59,4 +59,6 @@ INSERT INTO permissions (role, action, ressource) VALUES
 -- Utilisateur de test (mot de passe encode en BCrypt pour "password123")
 INSERT INTO utilisateurs (nom, prenom, email, mot_de_passe, role) VALUES
 ('Karoui', 'Alaeddine', 'alaeddine.karoui@bte.tn', '$2a$10$UsqLw0mSGUoG9e7fcD33b.38kTl2XCvGuYmdRlMoQBk4/.zi5T1Q6', 'ADMIN'),
-('Ben Slima', 'Wissem', 'wissem.benslima@bte.tn', '$2a$10$UsqLw0mSGUoG9e7fcD33b.38kTl2XCvGuYmdRlMoQBk4/.zi5T1Q6', 'CONSEILLER');
+('Ben Slima', 'Wissem', 'wissem.benslima@bte.tn', '$2a$10$UsqLw0mSGUoG9e7fcD33b.38kTl2XCvGuYmdRlMoQBk4/.zi5T1Q6', 'CONSEILLER'),
+('amir', 'med', 'amir.med@bte.tn', '$2a$10$UsqLw0mSGUoG9e7fcD33b.38kTl2XCvGuYmdRlMoQBk4/.zi5T1Q6', 'CONSEILLER');
+
