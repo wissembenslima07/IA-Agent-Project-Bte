@@ -70,6 +70,8 @@ The project follows a **microservices architecture** composed of four main servi
 - LangChain
 - LangGraph
 
+In Docker, the AI service calls an Ollama instance running on the host machine, not in a dedicated container.
+
 ---
 
 ## Database
@@ -211,6 +213,8 @@ cd BTE-project
 ```bash
 docker compose up --build
 ```
+
+Pre-requisite: start Ollama locally on your Windows machine before launching Docker.
 
 Services
 

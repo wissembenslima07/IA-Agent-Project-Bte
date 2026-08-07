@@ -1,8 +1,8 @@
-version: "3.9"
+version: '3.8'
 
 services:
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine
     container_name: bte-postgres
     environment:
       POSTGRES_DB: credit_db
@@ -15,30 +15,48 @@ services:
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U credit_user -d credit_db"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: bte-backend
-    depends_on:
-      postgres:
-        condition: service_healthy
-    ports:
-      - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/credit_db
+      SPRING_DATASOURCE_USERNAME: credit_user
+      SPRING_DATASOURCE_PASSWORD: credit_pass
+      AI_SERVICE_URL: http://ai-service:8000
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/uploads
 
   ai-service:
-    build: ./ai-service
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
     container_name: bte-ai-service
+    environment:
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: bte-frontend
     ports:
       - "4200:80"
@@ -47,3 +65,7 @@ services:
 
 volumes:
   pgdata:
+
+networks:
+  default:
+    name: bte-network

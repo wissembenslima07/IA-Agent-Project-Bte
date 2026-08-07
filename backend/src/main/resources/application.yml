@@ -1,9 +1,17 @@
 spring:
   application:
     name: credit-analysis-service
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB  
   profiles:
     active: dev
 
 jwt:
   secret: NDA0ZTYzNTQ2ZTc0NzM2NTYzNzI2NTc0NGI2NTc5NDY2Zjcy
   expiration: 3600000   # 1h en millisecondes
+
+storage:
+  local:
+    path: /uploads

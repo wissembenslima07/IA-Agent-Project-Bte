@@ -1,0 +1,88 @@
+.upload-zone {
+	border: 1.5px dashed var(--outline-variant, #cfcfd4);
+	border-radius: 1rem;
+	padding: 1.25rem;
+	background: linear-gradient(180deg, rgba(248, 250, 252, 0.9), rgba(255, 255, 255, 1));
+	text-align: center;
+	transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.upload-zone.drag-over {
+	border-color: var(--primary, #2563eb);
+	background: rgba(37, 99, 235, 0.04);
+	transform: translateY(-1px);
+}
+
+.upload-zone.uploading {
+	opacity: 0.85;
+}
+
+.hidden-input {
+	display: none;
+}
+
+.upload-icon {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 3rem;
+	height: 3rem;
+	border-radius: 999px;
+	background: rgba(37, 99, 235, 0.08);
+	color: var(--primary, #2563eb);
+	margin-bottom: 0.75rem;
+}
+
+.upload-zone h5 {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 700;
+	color: var(--on-surface, #111827);
+}
+
+.upload-zone p {
+	margin: 0.35rem 0 0;
+	color: var(--on-surface-variant, #6b7280);
+	font-size: 0.95rem;
+}
+
+.hint {
+	font-size: 0.85rem;
+}
+
+.actions {
+	margin-top: 1rem;
+}
+
+.pick-button {
+	border: 0;
+	border-radius: 0.8rem;
+	padding: 0.8rem 1.1rem;
+	background: var(--primary, #2563eb);
+	color: #fff;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.pick-button:disabled {
+	opacity: 0.65;
+	cursor: not-allowed;
+}
+
+.status {
+	margin-top: 0.9rem;
+	padding: 0.7rem 0.9rem;
+	border-radius: 0.75rem;
+	font-size: 0.9rem;
+	font-weight: 600;
+}
+
+.uploading-state {
+	background: rgba(37, 99, 235, 0.08);
+	color: var(--primary, #2563eb);
+}
+
+.error-state {
+	background: rgba(220, 38, 38, 0.08);
+	color: #b91c1c;
+}

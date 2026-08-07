@@ -1,4 +1,27 @@
+# Framework web asynchrone
 fastapi==0.115.0
+# Serveur ASGI
 uvicorn[standard]==0.30.0
+# Validation de données
 pydantic==2.9.0
+# Configuration
 python-dotenv==1.0.1
+# Client HTTP
+requests==2.32.3
+# Upload multipart
+python-multipart==0.0.6
+# Logging structuré
+python-json-logger==2.0.7
+
+# ===== NOUVEAU POUR SPRINT 6 =====
+# Extraction PDF (texte) — version compatible avec PaddleOCR 2.7.0.3
+PyMuPDF==1.20.2
+# Alternative legere: pdfplumber==0.11.0
+# OCR - Reconnaissance optique de caractères (très rapide & précis)
+PaddleOCR==2.7.0.3
+# Ou alternative (plus lent mais aussi bon):
+# easyocr==1.7.1
+# Traitement d'images
+Pillow==11.0.0
+# Parallélisation (nom corrigé : sans le préfixe "python-")
+multiprocessing-logging==0.3.4

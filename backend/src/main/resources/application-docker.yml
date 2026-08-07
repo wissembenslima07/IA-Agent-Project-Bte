@@ -9,7 +9,7 @@ spring:
       initialization-fail-timeout: 0   # ne bloque pas le démarrage sur erreur de connexion initiale, log clairement l'erreur
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:
@@ -17,3 +17,7 @@ spring:
 
 server:
   port: 8080
+
+ai:
+  service:
+    url: ${AI_SERVICE_URL:http://ai-service:8000}

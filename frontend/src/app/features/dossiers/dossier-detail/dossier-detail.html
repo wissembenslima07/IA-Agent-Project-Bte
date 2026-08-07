@@ -97,61 +97,189 @@
       <div class="grid grid-cols-1 lg:grid-cols-10 gap-lg">
         <!-- Left Column -->
         <div class="lg:col-span-6 space-y-lg">
-          <!-- Documents Card : pas de champ documentsCount côté back, état vide en dur -->
-          <div class="bg-white rounded-xl p-xl border border-outline-variant custom-shadow">
-            <div class="flex items-center justify-between mb-xl">
-              <h4 class="text-title-lg font-title-lg text-primary">Documents du dossier</h4>
-              <span class="text-label-md text-on-surface-variant">0 Documents</span>
-            </div>
-            <div class="flex flex-col items-center justify-center py-xl border-2 border-dashed border-outline-variant rounded-xl bg-surface-container-low">
-              <div class="w-16 h-16 bg-surface-container-highest rounded-full flex items-center justify-center mb-md">
-                <span class="material-symbols-outlined text-outline text-[32px]">folder_off</span>
-              </div>
-              <p class="text-body-lg text-on-surface-variant mb-lg">Aucun document déposé</p>
-              <button
-                (click)="ajouterDocument()"
-                class="px-xl py-md bg-primary text-white rounded-lg font-bold flex items-center gap-sm hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20">
-                <span class="material-symbols-outlined text-[20px]">add</span>
-                Ajouter un document
-              </button>
-              @if (documentUploadMessage()) {
-                <p class="text-label-sm text-on-surface-variant italic mt-md">{{ documentUploadMessage() }}</p>
-              }
-            </div>
-          </div>
+          <!-- Section Données Extraites (OCR) -->
+<div class="mt-lg">
+  <h3 class="font-headline-md text-primary mb-lg">Données Extraites (OCR)</h3>
 
-          <!-- Risk Score Card : pas de champ scoreRisque, état "à venir" en dur -->
-          <div class="bg-white rounded-xl p-xl border border-outline-variant custom-shadow overflow-hidden relative">
-            <div class="flex items-center justify-between mb-xl">
-              <h4 class="text-title-lg font-title-lg text-primary">Score de risque</h4>
-            </div>
-            <div class="flex flex-col md:flex-row items-center gap-xl">
-              <div class="relative w-32 h-32 flex items-center justify-center">
-                <svg class="w-full h-full transform -rotate-90">
-                  <circle class="text-surface-container-highest" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-width="8"></circle>
-                  <circle class="text-outline-variant" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor"
-                          stroke-dasharray="364.4" stroke-dashoffset="364.4" stroke-linecap="round" stroke-width="8"></circle>
-                </svg>
-                <span class="absolute text-headline-md font-black text-on-surface-variant">—</span>
-              </div>
-              <div class="flex-1 space-y-md text-center md:text-left">
-                <p class="text-display-lg font-black text-primary leading-none">— / 100</p>
-                <p class="text-body-md text-on-surface-variant max-w-xs">
-                  L'analyse IA n'a pas encore été lancée pour ce dossier.
-                </p>
-                <button
-                  (click)="lancerAnalyse()"
-                  class="px-lg py-sm border-2 border-secondary text-secondary rounded-lg font-bold hover:bg-secondary-fixed transition-colors">
-                  Lancer l'analyse
-                </button>
-                @if (analyseIaMessage()) {
-                  <p class="text-label-sm text-on-surface-variant italic">{{ analyseIaMessage() }}</p>
+  @if (isExtractingOCR()) {
+    <div class="p-lg bg-surface-container-low border border-outline-variant rounded-lg flex gap-md items-center">
+      <span class="material-symbols-outlined animate-spin text-secondary text-2xl">hourglass_empty</span>
+      <div>
+        <p class="font-semibold">Extraction en cours...</p>
+        <p class="text-label-sm text-on-surface-variant">Lecture du PDF/Image via OCR</p>
+      </div>
+    </div>
+  } @else if (ocrError()) {
+    <div class="p-lg bg-error-container/20 border border-error/20 rounded-lg flex gap-md items-start">
+      <span class="material-symbols-outlined text-error">error</span>
+      <p class="text-body-sm text-error">{{ ocrError() }}</p>
+    </div>
+  } @else if (donneesExtraites().size > 0) {
+    <div class="space-y-lg">
+      @for (donnees of donneesExtraites().values(); track donnees.documentId) {
+        <div class="bg-white p-lg rounded-xl border border-outline-variant">
+          <div class="flex items-start justify-between mb-lg">
+            <div>
+              <h4 class="font-title-md text-primary mb-sm">Document #{{ donnees.documentId }}</h4>
+              <div class="flex gap-md text-label-sm text-on-surface-variant">
+                <span>Méthode: {{ donnees.methode }}</span>
+                <span>•</span>
+                <span>Confiance: {{ (donnees.confidenceMoyenne * 100).toFixed(1) }}%</span>
+                @if (donnees.nombrePages) {
+                  <span>•</span>
+                  <span>Pages: {{ donnees.nombrePages }}</span>
                 }
               </div>
             </div>
-            <div class="absolute -right-8 -bottom-8 opacity-5">
-              <span class="material-symbols-outlined text-[120px]">psychology</span>
+            <span class="px-md py-xs rounded-full text-label-sm font-bold"
+                  [ngClass]="donnees.confidenceMoyenne > 0.8 
+                    ? 'bg-green-100 text-green-800' 
+                    : donnees.confidenceMoyenne > 0.6
+                    ? 'bg-orange-100 text-orange-800'
+                    : 'bg-red-100 text-red-800'">
+              {{ (donnees.confidenceMoyenne * 100).toFixed(0) }}%
+            </span>
+          </div>
+
+          <!-- Aperçu du texte extrait -->
+          <div class="bg-surface-container-low p-md rounded-lg mb-lg border border-outline-variant max-h-40 overflow-y-auto">
+            <p class="text-body-sm font-mono whitespace-pre-wrap">{{ donnees.textComplet.substring(0, 300) }}...</p>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex gap-sm">
+            <button class="px-lg py-sm border border-secondary text-secondary rounded-lg hover:bg-secondary-fixed transition-colors text-label-md">
+              Voir le texte complet
+            </button>
+            <button class="px-lg py-sm border border-secondary text-secondary rounded-lg hover:bg-secondary-fixed transition-colors text-label-md">
+              Corriger
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <p class="text-center text-on-surface-variant py-lg bg-surface-container-low rounded-lg border border-outline-variant">
+      Aucune donnée extraite pour le moment.
+    </p>
+  }
+</div>
+          <!-- Documents Card : pas de champ documentsCount côté back, état vide en dur -->
+          <!-- Documents Card -->
+<div class="bg-white rounded-xl p-xl border border-outline-variant custom-shadow">
+  <div class="flex items-center justify-between mb-xl">
+    <h4 class="text-title-lg font-title-lg text-primary">Documents du dossier</h4>
+    <span class="text-label-md text-on-surface-variant">{{ documents().length }} Documents</span>
+  </div>
+
+  <app-file-upload
+    [dossierId]="d.id"
+    (uploadComplete)="onUploadComplete($event)">
+  </app-file-upload>
+
+  <div class="mt-lg">
+    @if (documents().length === 0) {
+      <div class="flex flex-col items-center justify-center py-xl border-2 border-dashed border-outline-variant rounded-xl bg-surface-container-low">
+        <div class="w-16 h-16 bg-surface-container-highest rounded-full flex items-center justify-center mb-md">
+          <span class="material-symbols-outlined text-outline text-[32px]">folder_off</span>
+        </div>
+        <p class="text-body-lg text-on-surface-variant">Aucun document déposé pour le moment.</p>
+      </div>
+    } @else {
+      <div class="space-y-sm">
+        @for (doc of documents(); track doc.id) {
+          <div class="flex items-center justify-between p-md bg-surface-container-low rounded-lg border border-outline-variant">
+            <div class="flex items-center gap-md">
+              <span class="material-symbols-outlined text-secondary">description</span>
+              <div>
+                <p class="font-body-md font-semibold">{{ doc.nomFichier }}</p>
+                <p class="text-label-sm text-on-surface-variant">
+                  {{ (doc.tailleBytes / 1024 / 1024).toFixed(2) }} Mo · {{ doc.dateUpload | date:'dd/MM/yyyy HH:mm' }}
+                </p>
+              </div>
             </div>
+            <div class="flex items-center gap-xs">
+              <button (click)="consulterDocument(doc)"
+                      class="p-sm text-secondary hover:bg-secondary-fixed rounded-lg transition-colors"
+                      title="Consulter le document">
+                <span class="material-symbols-outlined">visibility</span>
+              </button>
+              <button (click)="supprimerDocument(doc.id)"
+                      class="p-sm text-error hover:bg-error-container/20 rounded-lg transition-colors"
+                      title="Supprimer le document">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+          <!-- Section Analyse IA -->
+          <div class="mt-lg">
+            <div class="flex items-center justify-between mb-lg">
+              <h3 class="font-headline-md text-primary">Analyse IA</h3>
+              <button (click)="lancerAnalyseIA()"
+                      [disabled]="isAnalyzing() || documents().length === 0"
+                      class="px-lg py-sm bg-secondary text-white font-semibold rounded-lg hover:brightness-110 disabled:opacity-50 transition-all">
+                <span class="material-symbols-outlined mr-sm">smart_toy</span>
+                Lancer l'analyse
+              </button>
+            </div>
+
+            @if (analysisError()) {
+              <div class="p-lg bg-error-container/20 border border-error/20 rounded-lg flex gap-md items-start mb-lg">
+                <span class="material-symbols-outlined text-error">error</span>
+                <div>
+                  <p class="font-semibold text-error">Erreur d'analyse</p>
+                  <p class="text-body-sm text-on-error-container">{{ analysisError() }}</p>
+                </div>
+              </div>
+            }
+
+            @if (isAnalyzing()) {
+              <div class="p-lg bg-surface-container-low border border-outline-variant rounded-lg flex gap-md items-center">
+                <span class="material-symbols-outlined animate-spin text-secondary text-2xl">hourglass_empty</span>
+                <div>
+                  <p class="font-semibold">Analyse en cours...</p>
+                  <p class="text-label-sm text-on-surface-variant">Traitement par Llama 3 (cela peut prendre 1-2 minutes)</p>
+                </div>
+              </div>
+            } @else if (aiAnalysis(); as analysis) {
+              <div class="bg-white p-lg rounded-xl border border-outline-variant">
+                <div class="flex items-start justify-between mb-lg">
+                  <div>
+                    <h4 class="font-headline-sm text-primary mb-md">Résultats de l'analyse</h4>
+                    <span class="inline-block px-md py-xs rounded-full font-bold text-label-md"
+                          [ngClass]="verdictBadgeClass(analysis.verdict)">
+                      {{ analysis.verdict }}
+                    </span>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-label-md text-on-surface-variant">Score de risque</p>
+                    <p class="text-4xl font-bold text-primary">{{ analysis.score_risque }}<span class="text-lg">/100</span></p>
+                  </div>
+                </div>
+
+                <div class="bg-surface-container-low p-md rounded-lg mb-lg">
+                  <p class="text-body-md">{{ analysis.justification }}</p>
+                </div>
+
+                <div>
+                  <h5 class="font-label-lg text-on-surface-variant uppercase tracking-wider mb-sm">Recommandations</h5>
+                  <ul class="space-y-sm">
+                    @for (rec of analysis.recommandations; track $index) {
+                      <li class="flex gap-md">
+                        <span class="material-symbols-outlined text-secondary flex-shrink-0">check_circle</span>
+                        <span class="text-body-md">{{ rec }}</span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              </div>
+            }
           </div>
         </div>
 
