@@ -1,27 +1,32 @@
-# Framework web asynchrone
+# ============================================================
+# BTE - Intelligent Credit Dossier Analysis System
+# FastAPI Microservice - Requirements
+# ============================================================
+
+# ===== FRAMEWORK WEB ASYNCHRONE =====
 fastapi==0.115.0
-# Serveur ASGI
 uvicorn[standard]==0.30.0
-# Validation de données
+
+# ===== VALIDATION DE DONNÉES =====
 pydantic==2.9.0
-# Configuration
+
+# ===== CONFIGURATION =====
 python-dotenv==1.0.1
-# Client HTTP
+
+# ===== CLIENT HTTP ET UPLOAD FILES =====
 requests==2.32.3
-# Upload multipart
 python-multipart==0.0.6
-# Logging structuré
+
+# ===== LOGGING STRUCTURÉ =====
 python-json-logger==2.0.7
 
-# ===== NOUVEAU POUR SPRINT 6 =====
-# Extraction PDF (texte) — version compatible avec PaddleOCR 2.7.0.3
-PyMuPDF==1.20.2
-# Alternative legere: pdfplumber==0.11.0
-# OCR - Reconnaissance optique de caractères (très rapide & précis)
-PaddleOCR==2.7.0.3
-# Ou alternative (plus lent mais aussi bon):
-# easyocr==1.7.1
+# ===== OCR/PDF (SANS PyMuPDF) =====
+# Extraction PDF (texte) - pdfplumber léger et fiable
+pdfplumber==0.11.0
+
+# OCR - Reconnaissance optique de caractères
+# VERSION 2.8.1+ SANS dépendance PyMuPDF
+PaddleOCR==2.8.1
+
 # Traitement d'images
 Pillow==11.0.0
-# Parallélisation (nom corrigé : sans le préfixe "python-")
-multiprocessing-logging==0.3.4

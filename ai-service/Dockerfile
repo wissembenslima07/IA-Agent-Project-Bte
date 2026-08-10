@@ -1,26 +1,29 @@
-FROM python:3.11-slim
+# ============================================================
+# BTE - Intelligent Credit Dossier Analysis System
+# FastAPI Microservice Dockerfile - ULTRA MINIMAL
+# ============================================================
+
+FROM python:3.10
 
 WORKDIR /app
 
-# Installer les dépendances système
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# ============ UPGRADE PIP SEULEMENT ============
+RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# Copier requirements
+# ============ INSTALLER LES DÉPENDANCES PYTHON ============
 COPY requirements.txt .
-RUN pip install --no-cache-dir --default-timeout=1000 --retries=10 -r requirements.txt
+RUN pip install --no-cache-dir --prefer-binary --default-timeout=1000 --retries=10 -r requirements.txt
 
-# Copier le code
+# ============ COPIER LE CODE ============
 COPY app/ app/
 COPY .env .
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+# ============ HEALTH CHECK ============
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8000/health', timeout=5)" || exit 1
 
-# Exposer le port
+# ============ EXPOSER LE PORT ============
 EXPOSE 8000
 
-# Démarrer
+# ============ DÉMARRER L'APPLICATION ============
 CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

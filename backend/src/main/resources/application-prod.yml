@@ -1,4 +1,10 @@
 spring:
+  application:
+    name: credit-analysis-service
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/credit_db}
     username: credit_user

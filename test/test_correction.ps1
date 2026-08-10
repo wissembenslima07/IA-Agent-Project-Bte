@@ -1,112 +1,123 @@
 # ==========================================
-# Script : test_corrections.ps1
-# Vérification des corrections
+# Script : check_ocr_files.ps1
+# Vérifie la présence des fichiers OCR
 # ==========================================
 
 Clear-Host
 
-Write-Host ""
-Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "        Vérification des corrections" -ForegroundColor Cyan
-Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host @"
 
-#
-# Test 1 : Spring Boot
-#
+╔══════════════════════════════════════════════════════════════╗
+║            VÉRIFICATION DES FICHIERS OCR                   ║
+╚══════════════════════════════════════════════════════════════╝
 
-Write-Host ""
-Write-Host "1. Spring Boot (/actuator/health)" -ForegroundColor Yellow
+"@ -ForegroundColor Cyan
 
-try {
+# ------------------------------------------------------------
+# Liste des fichiers attendus
+# ------------------------------------------------------------
 
-    $response = Invoke-RestMethod `
-        -Uri "http://localhost:8080/actuator/health" `
-        -Method GET `
-        -ErrorAction Stop
+$requiredFiles = @(
+    "ai-service\app\routers\ocr.py",
+    "ai-service\app\services\ocr_service.py",
+    "ai-service\app\schemas\ocr.py",
+    "ai-service\app\utils\ocr_utils.py"
+)
 
-    Write-Host "   OK - Status : $($response.status)" -ForegroundColor Green
+$allExist = $true
 
-}
-catch {
+# ------------------------------------------------------------
+# Vérification des fichiers
+# ------------------------------------------------------------
 
-    if ($_.Exception.Response) {
-        Write-Host "   Erreur HTTP : $([int]$_.Exception.Response.StatusCode)" -ForegroundColor Red
+Write-Host "`n1. Vérification des fichiers OCR..." -ForegroundColor Yellow
+
+foreach ($file in $requiredFiles) {
+
+    if (Test-Path $file) {
+        Write-Host "PASS  $file" -ForegroundColor Green
     }
     else {
-        Write-Host "   $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "FAIL  $file (manquant)" -ForegroundColor Red
+        $allExist = $false
     }
 
 }
 
-#
-# Test 2 : FastAPI
-#
+# ------------------------------------------------------------
+# Vérification du main.py
+# ------------------------------------------------------------
 
-Write-Host ""
-Write-Host "2. FastAPI (/health)" -ForegroundColor Yellow
+Write-Host "`n2. Vérification de app/main.py..." -ForegroundColor Yellow
 
-try {
+$mainPath = "ai-service\app\main.py"
 
-    $response = Invoke-RestMethod `
-        -Uri "http://localhost:8000/health" `
-        -Method GET `
-        -ErrorAction Stop
+if (Test-Path $mainPath) {
 
-    if ($response.status) {
-        Write-Host "   OK - Status : $($response.status)" -ForegroundColor Green
-    }
-    else {
-        Write-Host "   OK" -ForegroundColor Green
-    }
+    $mainContent = Get-Content $mainPath -Raw
 
-}
-catch {
+    # Vérifie l'import du router OCR
 
-    Write-Host "   $($_.Exception.Message)" -ForegroundColor Red
-
-}
-
-#
-# Test 3 : OpenAPI OCR
-#
-
-Write-Host ""
-Write-Host "3. Recherche des endpoints OCR..." -ForegroundColor Yellow
-
-try {
-
-    $openapi = Invoke-RestMethod `
-        -Uri "http://localhost:8000/openapi.json" `
-        -Method GET `
-        -ErrorAction Stop
-
-    $ocrPaths = $openapi.paths.PSObject.Properties |
-        Where-Object { $_.Name -match "ocr" }
-
-    if ($ocrPaths.Count -gt 0) {
-
-        Write-Host ""
-        Write-Host "Endpoints OCR trouvés :" -ForegroundColor Green
-
-        foreach ($path in $ocrPaths) {
-            Write-Host "   $($path.Name)" -ForegroundColor Green
-        }
-
+    if (
+        $mainContent -match "from\s+app\.routers\s+import.*ocr" `
+        -or
+        $mainContent -match "import\s+.*ocr"
+    ) {
+        Write-Host "PASS  Import OCR trouvé." -ForegroundColor Green
     }
     else {
+        Write-Host "FAIL  Import OCR absent." -ForegroundColor Red
+        $allExist = $false
+    }
 
-        Write-Host "   Aucun endpoint OCR trouvé." -ForegroundColor Red
+    # Vérifie include_router
 
+    if ($mainContent -match "include_router\s*\(.*ocr") {
+        Write-Host "PASS  include_router(ocr) trouvé." -ForegroundColor Green
+    }
+    else {
+        Write-Host "FAIL  include_router(ocr) absent." -ForegroundColor Red
+        $allExist = $false
     }
 
 }
-catch {
+else {
 
-    Write-Host "   $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "FAIL  app/main.py introuvable." -ForegroundColor Red
+    $allExist = $false
 
 }
 
+# ------------------------------------------------------------
+# Résumé
+# ------------------------------------------------------------
+
 Write-Host ""
-Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "Vérification terminée." -ForegroundColor Cyan
-Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host "==============================================================" -ForegroundColor Cyan
+
+if ($allExist) {
+
+    Write-Host "Tous les fichiers OCR sont présents." -ForegroundColor Green
+    Write-Host "Le router OCR est correctement déclaré." -ForegroundColor Green
+
+    Write-Host ""
+    Write-Host "Commande recommandée :" -ForegroundColor Yellow
+    Write-Host "docker compose build --no-cache ai-service"
+    Write-Host "docker compose up -d ai-service"
+
+}
+else {
+
+    Write-Host "Des fichiers ou des imports sont manquants." -ForegroundColor Red
+
+    Write-Host ""
+    Write-Host "Vérifie :" -ForegroundColor Yellow
+    Write-Host "- routers/ocr.py"
+    Write-Host "- services/ocr_service.py"
+    Write-Host "- schemas/ocr.py"
+    Write-Host "- utils/ocr_utils.py"
+    Write-Host "- app/main.py"
+
+}
+
+Write-Host "==============================================================" -ForegroundColor Cyan

@@ -1,8 +1,6 @@
 """Utilitaires OCR"""
 import logging
 from io import BytesIO
-from pathlib import Path
-import pymupdf  # PyMuPDF
 
 logger = logging.getLogger(__name__)
 
@@ -11,23 +9,18 @@ class PDFProcessor:
     
     @staticmethod
     def est_pdf_texte(file_bytes: bytes) -> bool:
-        """
-        Détermine si un PDF contient du texte extractible
-        (vs. image/scan)
-        """
+        """Détermine si un PDF contient du texte extractible"""
         try:
-            doc = pymupdf.open(stream=file_bytes, filetype="pdf")
+            import pdfplumber
+            pdf = pdfplumber.open(BytesIO(file_bytes))
             
-            # Extraire le texte de la première page
-            if len(doc) > 0:
-                first_page = doc[0]
-                text = first_page.get_text()
-                doc.close()
-                
-                # Si > 50 caractères, c'est un PDF texte
-                return len(text.strip()) > 50
+            if len(pdf.pages) > 0:
+                first_page = pdf.pages[0]
+                text = first_page.extract_text()
+                pdf.close()
+                return len(text.strip()) > 50 if text else False
             
-            doc.close()
+            pdf.close()
             return False
             
         except Exception as e:
@@ -38,21 +31,23 @@ class PDFProcessor:
     def extraire_texte_pdf(file_bytes: bytes) -> dict:
         """Extrait le texte d'un PDF texte"""
         try:
-            doc = pymupdf.open(stream=file_bytes, filetype="pdf")
+            import pdfplumber
+            pdf = pdfplumber.open(BytesIO(file_bytes))
             
             texte_complet = ""
             pages_extraites = []
             
-            for page_num, page in enumerate(doc):
-                texte_page = page.get_text()
-                texte_complet += f"\n--- PAGE {page_num + 1} ---\n{texte_page}"
-                pages_extraites.append({
-                    "page": page_num + 1,
-                    "texte": texte_page,
-                    "confidence": 1.0  # PDF texte = 100% confiance
-                })
+            for page_num, page in enumerate(pdf.pages):
+                texte_page = page.extract_text()
+                if texte_page:
+                    texte_complet += f"\n--- PAGE {page_num + 1} ---\n{texte_page}"
+                    pages_extraites.append({
+                        "page": page_num + 1,
+                        "texte": texte_page,
+                        "confidence": 1.0
+                    })
             
-            doc.close()
+            pdf.close()
             
             logger.info(f"PDF texte: {len(pages_extraites)} pages, {len(texte_complet)} caractères")
             
@@ -76,85 +71,113 @@ class OCRProcessor:
     """Traitement OCR pour images/scans"""
     
     def __init__(self):
-        # Initialiser PaddleOCR (télécharge le modèle au premier appel)
+        # Try PaddleOCR first, fall back to pytesseract if available
+        self.backend = None
+        self.ocr = None
         try:
             from paddleocr import PaddleOCR
             logger.info("Initialisation PaddleOCR...")
-            self.ocr = PaddleOCR(use_gpu=False, lang='fr')  # French + English
+            self.ocr = PaddleOCR(use_gpu=False, lang='fr')
+            self.backend = 'paddle'
             logger.info("✅ PaddleOCR initialisé")
-        except ImportError:
-            logger.error("PaddleOCR non installé")
-            self.ocr = None
+        except Exception:
+            try:
+                import pytesseract  # type: ignore
+                logger.info("PaddleOCR non disponible, fallback vers pytesseract")
+                self.backend = 'tesseract'
+                # no heavy init required for pytesseract
+            except Exception:
+                logger.error("Aucun backend OCR installé (PaddleOCR ou pytesseract)")
+                self.backend = None
+                self.ocr = None
     
     def extraire_texte_ocr(self, file_bytes: bytes, nom_fichier: str) -> dict:
-        """
-        Extrait le texte d'une image via OCR
-        Supporte: PNG, JPG, GIF, BMP, TIFF
-        """
-        if not self.ocr:
+        """Extrait le texte d'une image via OCR"""
+        from PIL import Image
+        import tempfile
+        from pathlib import Path
+
+        if self.backend is None:
             return {
                 "success": False,
-                "error": "OCR non disponible"
+                "error": "OCR non disponible (installer PaddleOCR ou pytesseract)"
             }
-        
+
         try:
-            from PIL import Image
-            import tempfile
-            
-            # Charger l'image
             image = Image.open(BytesIO(file_bytes))
-            
-            # Sauvegarder temporairement (PaddleOCR préfère les fichiers)
-            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-                image.save(tmp.name, "PNG")
-                temp_path = tmp.name
-            
-            # OCR
-            logger.info(f"OCR en cours pour {nom_fichier}...")
-            results = self.ocr.ocr(temp_path, cls=True)
-            
-            # Nettoyer le fichier temporaire
-            Path(temp_path).unlink()
-            
-            # Parser les résultats
-            texte_complet = ""
-            elements = []
-            confidences = []
-            
-            if results:
-                for line in results:
-                    if line:
-                        for word_info in line:
-                            text = word_info[1][0]
-                            confidence = word_info[1][1]
-                            
-                            texte_complet += text + " "
-                            confidences.append(confidence)
-                            elements.append({
-                                "texte": text,
-                                "confidence": round(confidence, 3)
-                            })
-            
-            confidence_moyenne = sum(confidences) / len(confidences) if confidences else 0
-            
-            logger.info(f"OCR complété: {len(texte_complet)} caractères, "
-                       f"confiance: {confidence_moyenne:.1%}")
-            
-            return {
-                "success": True,
-                "method": "ocr_paddle",
-                "texte_complet": texte_complet.strip(),
-                "elements": elements,
-                "confidence_moyenne": round(confidence_moyenne, 3),
-                "nombre_elements": len(elements)
-            }
-            
+
+            if self.backend == 'paddle':
+                with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                    image.save(tmp.name, "PNG")
+                    temp_path = tmp.name
+
+                logger.info(f"OCR (Paddle) en cours pour {nom_fichier}...")
+                results = self.ocr.ocr(temp_path, cls=True)
+                Path(temp_path).unlink()
+
+                texte_complet = ""
+                elements = []
+                confidences = []
+
+                if results:
+                    for line in results:
+                        if line:
+                            for word_info in line:
+                                text = word_info[1][0]
+                                confidence = word_info[1][1]
+                                texte_complet += text + " "
+                                confidences.append(confidence)
+                                elements.append({"texte": text, "confidence": round(confidence, 3)})
+
+                confidence_moyenne = sum(confidences) / len(confidences) if confidences else 0
+
+                return {
+                    "success": True,
+                    "method": "ocr_paddle",
+                    "texte_complet": texte_complet.strip(),
+                    "elements": elements,
+                    "confidence_moyenne": round(confidence_moyenne, 3),
+                    "nombre_elements": len(elements)
+                }
+
+            else:  # tesseract fallback
+                try:
+                    import pytesseract  # type: ignore
+                except Exception as e:
+                    logger.error(f"pytesseract import error: {e}")
+                    return {"success": False, "error": "pytesseract non disponible"}
+
+                logger.info(f"OCR (Tesseract) en cours pour {nom_fichier}...")
+                # Use image_to_data to get words and confidence
+                data = pytesseract.image_to_data(image, lang='fra', output_type=pytesseract.Output.DICT)
+                n_boxes = len(data.get('text', []))
+                texte_complet = ""
+                elements = []
+                confidences = []
+
+                for i in range(n_boxes):
+                    text = data['text'][i]
+                    if not text or text.strip() == "":
+                        continue
+                    conf = float(data['conf'][i]) if data['conf'][i] != '-1' else 0.0
+                    texte_complet += text + " "
+                    confidences.append(conf / 100.0)
+                    elements.append({"texte": text, "confidence": round(conf / 100.0, 3)})
+
+                confidence_moyenne = sum(confidences) / len(confidences) if confidences else 0
+
+                return {
+                    "success": True,
+                    "method": "ocr_tesseract",
+                    "texte_complet": texte_complet.strip(),
+                    "elements": elements,
+                    "confidence_moyenne": round(confidence_moyenne, 3),
+                    "nombre_elements": len(elements)
+                }
+
         except Exception as e:
             logger.error(f"Erreur OCR: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
 class UnifiedExtractor:
     """Pipeline unifié d'extraction"""
@@ -164,36 +187,27 @@ class UnifiedExtractor:
         self.ocr_processor = OCRProcessor()
     
     def extraire(self, file_bytes: bytes, nom_fichier: str, mime_type: str) -> dict:
-        """
-        Extrait le texte d'un fichier (PDF ou image)
-        Détermine automatiquement la méthode appropriée
-        """
+        """Extrait le texte d'un fichier (PDF ou image)"""
         
-        # Cas 1: Fichier PDF
         if mime_type == "application/pdf":
             if self.pdf_processor.est_pdf_texte(file_bytes):
                 return self.pdf_processor.extraire_texte_pdf(file_bytes)
             else:
-                # PDF scanné → OCR
                 logger.info(f"PDF scanné détecté, passage à OCR...")
-                # TODO: Convertir PDF scanné en images puis OCR
                 return {
                     "success": False,
                     "error": "PDF scanné nécessite conversion (non implémenté)"
                 }
         
-        # Cas 2: Fichiers image
         elif mime_type in ["image/png", "image/jpeg", "image/tiff", "image/gif"]:
             return self.ocr_processor.extraire_texte_ocr(file_bytes, nom_fichier)
         
-        # Cas 3: Format inconnu
         else:
             return {
                 "success": False,
                 "error": f"Format non supporté: {mime_type}"
             }
 
-# Instance singleton
 _extractor = None
 
 def get_extractor() -> UnifiedExtractor:
