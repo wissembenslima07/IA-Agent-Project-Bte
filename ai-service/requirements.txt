@@ -21,12 +21,14 @@ python-multipart==0.0.6
 python-json-logger==2.0.7
 
 # ===== OCR/PDF (SANS PyMuPDF) =====
-# Extraction PDF (texte) - pdfplumber léger et fiable
 pdfplumber==0.11.0
 
-# OCR - Reconnaissance optique de caractères
-# VERSION 2.8.1+ SANS dépendance PyMuPDF
+# OCR - moteur PaddlePaddle (requis par PaddleOCR)
+paddlepaddle==2.6.2
 PaddleOCR==2.8.1
+
+# OCR - fallback léger si PaddleOCR pose problème (recommandé)
+pytesseract==0.3.13
 
 # Traitement d'images
 Pillow==11.0.0

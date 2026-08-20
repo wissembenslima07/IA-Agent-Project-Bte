@@ -23,9 +23,8 @@ class AiAnalysisService:
             logger.info(f"Analyse lancée pour dossier {dossierId}")
             
             # 1. Construire le prompt
-            prompt = self.prompt.construire_prompt_analyse(
-                dossierId, clientNom, clientPrenom, documents, contexte
-            )
+            prompt = self.prompt.construire_prompt_analyse_legacy(
+             dossierId, clientNom, clientPrenom, documents, contexte)
             
             # 2. Appeler Ollama
             response_text = self.ollama.generer(prompt)

@@ -8,6 +8,8 @@ services:
       POSTGRES_DB: credit_db
       POSTGRES_USER: credit_user
       POSTGRES_PASSWORD: credit_pass
+      # ✅ NEW: Initialiser avec superuser
+      POSTGRES_INITDB_ARGS: "-c max_connections=200"
     ports:
       - "5432:5432"
     volumes:
@@ -18,6 +20,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - bte-network
+    # ✅ NEW: Restart policy
+    restart: unless-stopped
 
   backend:
     build:
@@ -30,6 +36,9 @@ services:
       SPRING_DATASOURCE_USERNAME: credit_user
       SPRING_DATASOURCE_PASSWORD: credit_pass
       AI_SERVICE_URL: http://ai-service:8000
+      # ✅ NEW: Timeout configuration (60 secondes)
+      APP_HTTP_AI_SERVICE_CONNECT_TIMEOUT: 10000
+      APP_HTTP_AI_SERVICE_READ_TIMEOUT: 60000
     ports:
       - "8080:8080"
     depends_on:
@@ -37,6 +46,15 @@ services:
         condition: service_healthy
     volumes:
       - ./uploads:/uploads
+    networks:
+      - bte-network
+    restart: unless-stopped
+    # ✅ NEW: Healthcheck
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   ai-service:
     build:
@@ -45,8 +63,15 @@ services:
     container_name: bte-ai-service
     environment:
       OLLAMA_BASE_URL: http://host.docker.internal:11434
+      # ✅ NEW: Database (optionnel, si ai-service accède à la BD)
+      DATABASE_URL: postgresql://credit_user:credit_pass@postgres:5432/credit_db
     ports:
       - "8000:8000"
+    depends_on:
+      - postgres
+    networks:
+      - bte-network
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -62,10 +87,20 @@ services:
       - "4200:80"
     depends_on:
       - backend
+    networks:
+      - bte-network
+    restart: unless-stopped
+    # ✅ NEW: Healthcheck
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   pgdata:
+    driver: local
 
 networks:
-  default:
-    name: bte-network
+  bte-network:
+    driver: bridge

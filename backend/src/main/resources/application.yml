@@ -15,3 +15,18 @@ jwt:
 storage:
   local:
     path: /uploads
+
+# ============================================================
+# HTTP CLIENT TIMEOUTS
+# ============================================================
+app:
+  http:
+    ai-service:
+      connect-timeout: 10000    # 10 secondes (établir connexion)
+      read-timeout: 60000       # 60 secondes (attendre réponse LLM)
+
+# URL du microservice IA
+ai:
+  service:
+    url: http://ai-service:8000  # Docker compose
+    # url: http://localhost:8000  # Local dev

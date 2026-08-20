@@ -1,13 +1,21 @@
 # ============================================================
 # BTE - Intelligent Credit Dossier Analysis System
-# FastAPI Microservice Dockerfile - ULTRA MINIMAL
+# FastAPI Microservice Dockerfile
 # ============================================================
 
 FROM python:3.10
 
 WORKDIR /app
 
-# ============ UPGRADE PIP SEULEMENT ============
+# ============ DÉPENDANCES SYSTÈME (OCR) ============
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tesseract-ocr \
+    tesseract-ocr-fra \
+    libgl1 \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# ============ UPGRADE PIP ============
 RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # ============ INSTALLER LES DÉPENDANCES PYTHON ============
