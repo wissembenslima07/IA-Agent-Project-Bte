@@ -4,12 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar';
 import { DossierService, Dossier as DossierBackend } from '../../core/services/dossier.service';
-
-export interface AlerteRisque {
-  type: 'warning' | 'info';
-  titre: string;
-  description: string;
-}
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 export interface StatCard {
   icone: string;
@@ -35,15 +31,25 @@ export interface StatCard {
 export class DashboardComponent implements OnInit {
   private router = inject(Router);
   private dossierService = inject(DossierService);
+  private http = inject(HttpClient);
 
   termeRecherche = '';
   isLoading = signal(true);
 
   dossiers = signal<DossierBackend[]>([]);
   totalDossiers = signal(0);
+  scoreMoyenRisque = signal<number | null>(null);
 
   ngOnInit(): void {
     this.chargerDossiers();
+    this.chargerScoreMoyenRisque();
+  }
+
+  chargerScoreMoyenRisque(): void {
+    this.http.get<{ scoreMoyenRisque: number | null }>(`${environment.apiUrl}/analyse/stats`).subscribe({
+      next: (stats) => this.scoreMoyenRisque.set(stats.scoreMoyenRisque),
+      error: () => this.scoreMoyenRisque.set(null)
+    });
   }
 
   chargerDossiers(): void {
@@ -105,19 +111,13 @@ export class DashboardComponent implements OnInit {
       iconeBgClass: 'bg-orange-50',
       iconeColorClass: 'text-orange-600',
       label: 'Score moyen de risque',
-      valeur: '—',
+      valeur: this.scoreMoyenRisque() !== null ? String(this.scoreMoyenRisque()) : '—',
       suffixe: '/100',
-      badge: 'BIENTÔT',
-      badgeClass: 'text-on-surface-variant bg-surface-container',
-      sousTexte: "Disponible apres integration de l'agent IA"
+      sousTexte: this.scoreMoyenRisque() !== null
+        ? 'Basé sur les dernières analyses IA'
+        : 'Aucune analyse IA effectuée pour le moment'
     }
   ]);
-
-  // Pas encore de vraies alertes IA (Rule Engine = sprint ulterieur) :
-  // tableau vide plutot que des donnees inventees
-  alertes: AlerteRisque[] = [];
-
-  precisionScoreIA: number | null = null;
 
   voirDossier(dossier: DossierBackend): void {
     this.router.navigate(['/dossiers', dossier.id]);
@@ -125,10 +125,6 @@ export class DashboardComponent implements OnInit {
 
   nouveauDossier(): void {
     this.router.navigate(['/dossiers/nouveau']);
-  }
-
-  lancerAnalyseGlobale(): void {
-    console.log("Fonctionnalite disponible apres integration de l'agent IA");
   }
 
   filtrerDossiers(): void {

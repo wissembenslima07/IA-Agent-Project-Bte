@@ -23,7 +23,7 @@ app:
   http:
     ai-service:
       connect-timeout: 10000    # 10 secondes (établir connexion)
-      read-timeout: 60000       # 60 secondes (attendre réponse LLM)
+      read-timeout: 240000      # 4 minutes (inférence LLM locale/CPU peut dépasser 60s par appel)
 
 # URL du microservice IA
 ai:

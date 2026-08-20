@@ -5,8 +5,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
+
+import java.net.http.HttpClient;
+import java.time.Duration;
 
 @Configuration
 public class RestClientConfig {
@@ -26,13 +29,18 @@ public class RestClientConfig {
      */
     @Bean
     public RestClient restClient() {
-        // Créer la factory avec timeouts
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout((int) connectTimeout);
-        factory.setReadTimeout((int) readTimeout);
+        // Client HTTP JDK (java.net.http.HttpClient) : plus fiable que
+        // SimpleClientHttpRequestFactory pour les réponses longues (LLM),
+        // qui pouvait perdre l'en-tête Content-Type sur les requêtes lentes.
+        HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofMillis(connectTimeout))
+            .build();
+
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
+        factory.setReadTimeout(Duration.ofMillis(readTimeout));
 
         // Wrapper pour buffering
-        ClientHttpRequestFactory bufferingFactory = 
+        ClientHttpRequestFactory bufferingFactory =
             new BufferingClientHttpRequestFactory(factory);
 
         // Construire RestClient avec la factory

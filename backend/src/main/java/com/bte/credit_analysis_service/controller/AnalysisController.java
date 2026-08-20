@@ -2,10 +2,12 @@ package com.bte.credit_analysis_service.controller;
 
 import com.bte.credit_analysis_service.dto.EvaluateMultipleFichesRequest;
 import com.bte.credit_analysis_service.dto.AnalyseCompleteFichesResponse;
+import com.bte.credit_analysis_service.model.Utilisateur;
 import com.bte.credit_analysis_service.service.CreditAnalysisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -23,7 +25,8 @@ public class AnalysisController {
      */
     @PostMapping("/evaluate-multiple-fiches")
     public ResponseEntity<?> evaluateMultipleFiches(
-            @RequestBody EvaluateMultipleFichesRequest request) {
+            @RequestBody EvaluateMultipleFichesRequest request,
+            @AuthenticationPrincipal Utilisateur utilisateur) {
 
         log.info("📋 POST /api/analyse/evaluate-multiple-fiches - Dossier: {}", request.getDossierId());
 
@@ -42,7 +45,7 @@ public class AnalysisController {
             }
 
             // Exécuter le pipeline
-            AnalyseCompleteFichesResponse response = creditAnalysisService.analyzeMultipleFiches(request);
+            AnalyseCompleteFichesResponse response = creditAnalysisService.analyzeMultipleFiches(request, utilisateur);
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
@@ -69,5 +72,14 @@ public class AnalysisController {
     @GetMapping("/health")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("✅ Analysis Service UP");
+    }
+
+    /**
+     * Statistiques globales pour le dashboard (score moyen de risque sur le dernier
+     * verdict de chaque dossier analysé).
+     */
+    @GetMapping("/stats")
+    public ResponseEntity<Map<String, Object>> statistiques() {
+        return ResponseEntity.ok(creditAnalysisService.calculerStatistiquesRisque());
     }
 }

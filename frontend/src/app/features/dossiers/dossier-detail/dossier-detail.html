@@ -197,6 +197,14 @@
               </div>
             </div>
             <div class="flex items-center gap-xs">
+              @if (!donneesExtraites().has(doc.id)) {
+                <button (click)="lancerExtractionOCR(doc)"
+                        [disabled]="isExtractingOCR()"
+                        class="p-sm text-secondary hover:bg-secondary-fixed rounded-lg transition-colors disabled:opacity-50"
+                        title="Lancer l'extraction OCR">
+                  <span class="material-symbols-outlined">document_scanner</span>
+                </button>
+              }
               <button (click)="consulterDocument(doc)"
                       class="p-sm text-secondary hover:bg-secondary-fixed rounded-lg transition-colors"
                       title="Consulter le document">
@@ -220,12 +228,19 @@
             <div class="flex items-center justify-between mb-lg">
               <h3 class="font-headline-md text-primary">Analyse IA</h3>
               <button (click)="lancerAnalyseIA()"
-                      [disabled]="isAnalyzing() || documents().length === 0"
+                      [disabled]="isAnalyzing() || donneesExtraites().size < MIN_FICHES_ANALYSE"
                       class="px-lg py-sm bg-secondary text-white font-semibold rounded-lg hover:brightness-110 disabled:opacity-50 transition-all">
                 <span class="material-symbols-outlined mr-sm">smart_toy</span>
                 Lancer l'analyse
               </button>
             </div>
+
+            @if (!isAnalyzing() && donneesExtraites().size < MIN_FICHES_ANALYSE) {
+              <p class="text-label-sm text-on-surface-variant mb-lg">
+                Au moins {{ MIN_FICHES_ANALYSE }} documents avec extraction OCR réussie sont nécessaires pour lancer l'analyse
+                ({{ donneesExtraites().size }}/{{ MIN_FICHES_ANALYSE }} prêts).
+              </p>
+            }
 
             @if (analysisError()) {
               <div class="p-lg bg-error-container/20 border border-error/20 rounded-lg flex gap-md items-start mb-lg">
@@ -257,25 +272,74 @@
                   </div>
                   <div class="text-right">
                     <p class="text-label-md text-on-surface-variant">Score de risque</p>
-                    <p class="text-4xl font-bold text-primary">{{ analysis.score_risque }}<span class="text-lg">/100</span></p>
+                    <p class="text-4xl font-bold text-primary">{{ analysis.scoreRisque }}<span class="text-lg">/100</span></p>
+                    <p class="text-label-sm text-on-surface-variant">Confiance: {{ (analysis.confiance * 100).toFixed(0) }}%</p>
                   </div>
                 </div>
 
                 <div class="bg-surface-container-low p-md rounded-lg mb-lg">
+                  <p class="text-body-md font-semibold mb-xs">{{ analysis.resumeCourt }}</p>
                   <p class="text-body-md">{{ analysis.justification }}</p>
                 </div>
 
-                <div>
-                  <h5 class="font-label-lg text-on-surface-variant uppercase tracking-wider mb-sm">Recommandations</h5>
-                  <ul class="space-y-sm">
-                    @for (rec of analysis.recommandations; track $index) {
-                      <li class="flex gap-md">
-                        <span class="material-symbols-outlined text-secondary flex-shrink-0">check_circle</span>
-                        <span class="text-body-md">{{ rec }}</span>
-                      </li>
+                @if (analysis.montantMaxRecommande || analysis.dureeMaxRecommandee) {
+                  <div class="grid grid-cols-2 gap-md mb-lg">
+                    @if (analysis.montantMaxRecommande) {
+                      <div class="p-md bg-surface-container-low rounded-lg">
+                        <p class="text-label-sm text-on-surface-variant">Montant max. recommandé</p>
+                        <p class="text-title-md font-bold text-primary">{{ analysis.montantMaxRecommande }} €</p>
+                      </div>
                     }
-                  </ul>
-                </div>
+                    @if (analysis.dureeMaxRecommandee) {
+                      <div class="p-md bg-surface-container-low rounded-lg">
+                        <p class="text-label-sm text-on-surface-variant">Durée max. recommandée</p>
+                        <p class="text-title-md font-bold text-primary">{{ analysis.dureeMaxRecommandee }}</p>
+                      </div>
+                    }
+                  </div>
+                }
+
+                @if (analysis.pointsForts.length > 0) {
+                  <div class="mb-lg">
+                    <h5 class="font-label-lg text-on-surface-variant uppercase tracking-wider mb-sm">Points forts</h5>
+                    <ul class="space-y-sm">
+                      @for (point of analysis.pointsForts; track $index) {
+                        <li class="flex gap-md">
+                          <span class="material-symbols-outlined text-green-600 flex-shrink-0">check_circle</span>
+                          <span class="text-body-md">{{ point }}</span>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                }
+
+                @if (analysis.risquesMajeurs.length > 0) {
+                  <div class="mb-lg">
+                    <h5 class="font-label-lg text-on-surface-variant uppercase tracking-wider mb-sm">Risques majeurs</h5>
+                    <ul class="space-y-sm">
+                      @for (risque of analysis.risquesMajeurs; track $index) {
+                        <li class="flex gap-md">
+                          <span class="material-symbols-outlined text-error flex-shrink-0">warning</span>
+                          <span class="text-body-md">{{ risque }}</span>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                }
+
+                @if (analysis.tendancesObservees.length > 0) {
+                  <div>
+                    <h5 class="font-label-lg text-on-surface-variant uppercase tracking-wider mb-sm">Tendances observées</h5>
+                    <ul class="space-y-sm">
+                      @for (tendance of analysis.tendancesObservees; track $index) {
+                        <li class="flex gap-md">
+                          <span class="material-symbols-outlined text-secondary flex-shrink-0">trending_up</span>
+                          <span class="text-body-md">{{ tendance }}</span>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                }
               </div>
             }
           </div>

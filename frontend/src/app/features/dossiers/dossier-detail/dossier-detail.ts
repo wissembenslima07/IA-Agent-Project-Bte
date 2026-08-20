@@ -3,7 +3,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DossierService, Dossier, HistoriqueAction } from '../../../core/services/dossier.service';
 import { DocumentService, Document } from '../../../core/services/document';
-import { AiAnalysisService, AiAnalysisRequest, AiAnalysisResponse } from '../../../core/services/ai-analysis';
+import { AiAnalysisService, AiAnalysisRequest, AnalyseCompleteFiches } from '../../../core/services/ai-analysis';
 import { SidebarComponent } from '../../../shared/components/sidebar/sidebar';
 import { FileUploadComponent } from '../../../shared/components/file-upload/file-upload';
 import { DonneesExtraites, OCRService } from '../../../core/services/ocr';
@@ -38,9 +38,10 @@ export class DossierDetailComponent implements OnInit {
   readonly isUpdatingStatus = signal(false);
 
   // --- Analyse IA ---
-  readonly aiAnalysis = signal<AiAnalysisResponse | null>(null);
+  readonly aiAnalysis = signal<AnalyseCompleteFiches | null>(null);
   readonly isAnalyzing = signal(false);
   readonly analysisError = signal<string | null>(null);
+  readonly MIN_FICHES_ANALYSE = 2;
 
   private readonly statutLabels: Record<string, string> = {
     EN_COURS: 'En cours',
@@ -132,6 +133,7 @@ export class DossierDetailComponent implements OnInit {
 
   onUploadComplete(newDocuments: Document[]): void {
     this.documents.update(docs => [...docs, ...newDocuments]);
+    newDocuments.forEach(doc => this.lancerExtractionOCR(doc));
   }
 
   consulterDocument(doc: Document): void {
@@ -202,10 +204,13 @@ export class DossierDetailComponent implements OnInit {
 
   lancerAnalyseIA(): void {
     const d = this.dossier();
-    const docs = this.documents();
+    if (!d) return;
 
-    if (!d || docs.length === 0) {
-      this.analysisError.set('Veuillez d\'abord télécharger des documents.');
+    const fichesDisponibles = Array.from(this.donneesExtraites().values());
+    if (fichesDisponibles.length < this.MIN_FICHES_ANALYSE) {
+      this.analysisError.set(
+        `Il faut au moins ${this.MIN_FICHES_ANALYSE} documents avec extraction OCR réussie pour lancer l'analyse (actuellement ${fichesDisponibles.length}).`
+      );
       return;
     }
 
@@ -214,27 +219,46 @@ export class DossierDetailComponent implements OnInit {
 
     const request: AiAnalysisRequest = {
       dossierId: d.id,
-      clientNom: d.clientNom,
-      clientPrenom: d.clientPrenom,
-      documents: docs.map(doc => ({
-        typeDocument: doc.typeDocument,
-        contenu: `${doc.nomFichier} (${this.formatFileSize(doc.tailleBytes)})`
-      })),
-      contexteSupplementaire: `Statut actuel: ${d.statut}`
+      clientName: `${d.clientPrenom} ${d.clientNom}`.trim(),
+      clientEmail: '',
+      fiches: fichesDisponibles.map(donnees => ({
+        mois: this.moisPourDocument(donnees.documentId),
+        texteExtrait: donnees.textComplet
+      }))
     };
 
     this.aiAnalysisService.lancerAnalyse(request).subscribe({
-      next: (analysis) => {
-        this.aiAnalysis.set(analysis);
+      next: (response) => {
+        this.aiAnalysis.set(response.data);
         this.isAnalyzing.set(false);
         this.loadHistorique();
       },
       error: (err) => {
         console.error('Erreur analyse IA', err);
-        this.analysisError.set('Erreur lors de l\'analyse IA: ' + (err.error?.detail || err.message));
+        this.analysisError.set('Erreur lors de l\'analyse IA: ' + (err.error?.error || err.error?.detail || err.message));
         this.isAnalyzing.set(false);
       }
     });
+  }
+
+  private static readonly MOIS_REGEX = new RegExp(
+    '(janvier|f[eé]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[eé]cembre)[_ -]+(\\d{4})',
+    'i'
+  );
+
+  // Le nom de fichier contient souvent la vraie période de la fiche (ex: "..._Juin_2026_..."),
+  // plus fiable que la date d'upload si plusieurs fiches sont déposées le même jour.
+  private moisPourDocument(documentId: number): string {
+    const doc = this.documents().find(d => d.id === documentId);
+    if (!doc) return `Document ${documentId}`;
+
+    const match = doc.nomFichier.match(DossierDetailComponent.MOIS_REGEX);
+    if (match) {
+      const mois = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
+      return `${mois} ${match[2]}`;
+    }
+
+    return new Date(doc.dateUpload).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
   }
 
   verdictBadgeClass(verdict: string): string {
@@ -244,16 +268,6 @@ export class DossierDetailComponent implements OnInit {
       case 'REJETE': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
-  }
-
-  // Formatage lisible d'une taille en octets (Ko/Mo). Utilisé dans le
-  // payload envoyé à l'IA et potentiellement dans le template.
-  formatFileSize(bytes: number): string {
-    if (!bytes || bytes <= 0) return '0 o';
-    const units = ['o', 'Ko', 'Mo', 'Go'];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    const value = bytes / Math.pow(1024, i);
-    return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
   }
 
   retourListe(): void {
@@ -266,13 +280,6 @@ readonly donneesExtraites = signal<Map<number, DonneesExtraites>>(new Map());
 readonly isExtractingOCR = signal(false);
 readonly ocrError = signal<string | null>(null);
 
-onDocumentUploadComplete(newDocuments: Document[]): void {
-  this.documents.update(docs => [...docs, ...newDocuments]);
-  
-  // Lancer automatiquement l'extraction OCR
-  newDocuments.forEach(doc => this.lancerExtractionOCR(doc));
-}
-
 lancerExtractionOCR(document: Document): void {
   const dossierId = this.dossier()?.id;
   if (!dossierId || !document) return;
@@ -280,18 +287,25 @@ lancerExtractionOCR(document: Document): void {
   this.isExtractingOCR.set(true);
   this.ocrError.set(null);
 
-  // Récupérer le fichier depuis le stockage
-  // Note: Cela nécessite un endpoint backend pour récupérer le fichier
-  const file = new File([`Document ${document.id}`], document.nomFichier);
+  this.documentService.consulterDocument(dossierId, document.id).subscribe({
+    next: (blob) => {
+      const file = new File([blob], document.nomFichier, { type: document.mimeType });
 
-  this.ocrService.extraireDocument(file, document.id).subscribe({
-    next: (donnees) => {
-      this.donneesExtraites.update(map => new Map(map).set(document.id, donnees));
-      this.isExtractingOCR.set(false);
+      this.ocrService.extraireDocument(file, document.id).subscribe({
+        next: (donnees) => {
+          this.donneesExtraites.update(map => new Map(map).set(document.id, donnees));
+          this.isExtractingOCR.set(false);
+        },
+        error: (err) => {
+          console.error('Erreur OCR', err);
+          this.ocrError.set('Erreur extraction: ' + (err.error?.detail || err.message));
+          this.isExtractingOCR.set(false);
+        }
+      });
     },
     error: (err) => {
-      console.error('Erreur OCR', err);
-      this.ocrError.set('Erreur extraction: ' + err.error?.detail);
+      console.error('Erreur téléchargement document pour OCR', err);
+      this.ocrError.set('Impossible de récupérer le document pour extraction OCR.');
       this.isExtractingOCR.set(false);
     }
   });

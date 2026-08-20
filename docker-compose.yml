@@ -36,9 +36,9 @@ services:
       SPRING_DATASOURCE_USERNAME: credit_user
       SPRING_DATASOURCE_PASSWORD: credit_pass
       AI_SERVICE_URL: http://ai-service:8000
-      # ✅ NEW: Timeout configuration (60 secondes)
+      # Timeout configuration (inférence LLM locale peut dépasser 60s par appel)
       APP_HTTP_AI_SERVICE_CONNECT_TIMEOUT: 10000
-      APP_HTTP_AI_SERVICE_READ_TIMEOUT: 60000
+      APP_HTTP_AI_SERVICE_READ_TIMEOUT: 240000
     ports:
       - "8080:8080"
     depends_on:

@@ -154,45 +154,6 @@
         </ng-template>
       </div>
 
-      <!-- Alertes + Assistant IA -->
-      <div class="mt-xl grid grid-cols-1 md:grid-cols-2 gap-gutter">
-        <div class="bg-white p-lg rounded-xl border border-outline-variant">
-          <h5 class="font-headline-sm text-headline-sm text-primary mb-lg">Alertes de risque prioritaires</h5>
-          <ng-container *ngIf="alertes?.length === 0; else alertesList">
-            <p class="text-body-md text-on-surface-variant">
-              Aucune alerte pour le moment — disponible après intégration du moteur de règles métier.
-            </p>
-          </ng-container>
-          <ng-template #alertesList>
-            <div class="space-y-md">
-              <div *ngFor="let alerte of alertes" class="flex items-start gap-md p-md rounded-lg border"
-                   [ngClass]="alerte.type === 'warning' ? 'bg-error-container/20 border-error/10' : 'bg-secondary-container/10 border-secondary/10'">
-                <span class="material-symbols-outlined" [ngClass]="alerte.type === 'warning' ? 'text-error' : 'text-secondary'">
-                  {{ alerte.type === 'warning' ? 'warning' : 'info' }}
-                </span>
-                <div>
-                  <p class="font-body-md font-bold" [ngClass]="alerte.type === 'warning' ? 'text-on-error-container' : 'text-on-secondary-container'">{{ alerte.titre }}</p>
-                  <p class="text-body-md text-on-surface-variant">{{ alerte.description }}</p>
-                </div>
-              </div>
-            </div>
-          </ng-template>
-        </div>
-
-        <div class="bg-primary text-white p-lg rounded-xl flex flex-col justify-between relative overflow-hidden">
-          <div class="absolute -right-20 -top-20 w-64 h-64 bg-secondary rounded-full blur-[100px] opacity-20"></div>
-          <div>
-            <h5 class="font-headline-sm text-headline-sm mb-sm">Assistant IA Analyste</h5>
-            <p class="text-on-primary-container text-body-md">L'analyse prédictive sera disponible après l'intégration de l'agent IA (sprints à venir).</p>
-          </div>
-          <div class="mt-xl">
-            <button disabled
-                    class="w-full py-md bg-white/40 text-primary font-bold rounded-lg cursor-not-allowed">
-              Bientôt disponible
-            </button>
-          </div>
-        </div>
-      </div>
     </main>
   </div>
 </div>
